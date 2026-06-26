@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Industrial Power Cost Analysis</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #0f1724; --surface: #1a2332; --card: #1e2a3a; --border: #2a3a4d;
+  --text: #e8edf3; --muted: #8899aa; --accent: #3b82f6; --accent2: #10b981;
+  --danger: #ef4444; --warning: #f59e0b; --purple: #8b5cf6;
+}
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+.header { background: linear-gradient(135deg, #1a2332 0%, #0f1724 100%); border-bottom: 1px solid var(--border); padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; }
+.header h1 { font-size: 20px; font-weight: 600; }
+.header h1 span { color: var(--accent); }
+.header .subtitle { color: var(--muted); font-size: 13px; }
+.badge { background: var(--accent); color: #fff; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+
+.tabs { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 32px; gap: 4px; }
+.tab { padding: 12px 20px; cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 500; border-bottom: 2px solid transparent; transition: all 0.2s; }
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.content { padding: 24px 32px; max-width: 1400px; margin: 0 auto; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+.card h3 { font-size: 13px; color: var(--muted); font-weight: 500; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+.card .value { font-size: 28px; font-weight: 700; }
+.card .unit { font-size: 13px; color: var(--muted); margin-left: 4px; }
+.card .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.positive { color: var(--accent2); }
+.negative { color: var(--danger); }
+
+.table-card { overflow: hidden; }
+.table-card h3 { padding: 0 0 12px 0; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 10px 12px; background: rgba(59,130,246,0.08); color: var(--accent); font-weight: 600; border-bottom: 1px solid var(--border); }
+td { padding: 9px 12px; border-bottom: 1px solid rgba(42,58,77,0.5); }
+tr:hover td { background: rgba(59,130,246,0.04); }
+td.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+select, input[type="number"] {
+  background: var(--surface); border: 1px solid var(--border); color: var(--text);
+  padding: 8px 12px; border-radius: 6px; font-size: 13px; outline: none;
+}
+select:focus, input:focus { border-color: var(--accent); }
+label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; }
+.input-group { display: flex; flex-direction: column; gap: 4px; }
+
+.chart-container { position: relative; height: 300px; }
+.bar-compare { display: flex; align-items: flex-end; gap: 32px; height: 200px; justify-content: center; margin: 20px 0; }
+.bar-wrapper { text-align: center; }
+.bar { width: 80px; border-radius: 6px 6px 0 0; transition: height 0.5s; min-height: 20px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 8px; font-weight: 700; font-size: 14px; }
+.bar-label { margin-top: 8px; font-size: 12px; color: var(--muted); }
+
+.savings-banner { background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(59,130,246,0.1)); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 20px 24px; text-align: center; margin-bottom: 20px; }
+.savings-banner .amount { font-size: 36px; font-weight: 800; color: var(--accent2); }
+.savings-banner .label { font-size: 14px; color: var(--muted); }
+
+.season-pills { display: flex; gap: 8px; margin-bottom: 16px; }
+.pill { padding: 6px 16px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid var(--border); color: var(--muted); transition: all 0.2s; }
+.pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.exchange-card { border: 2px solid transparent; cursor: pointer; transition: all 0.2s; }
+.exchange-card.selected { border-color: var(--accent); box-shadow: 0 0 20px rgba(59,130,246,0.15); }
+.exchange-card .logo { font-size: 24px; margin-bottom: 8px; }
+
+.tooltip { position: relative; }
+.tooltip::after { content: attr(data-tip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 11px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+.tooltip:hover::after { opacity: 1; }
+
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+.mt-20 { margin-top: 20px; }
+.mb-20 { margin-bottom: 20px; }
+.gap-12 { gap: 12px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1><span>⚡</span> Industrial Power Cost Analyzer</h1>
+    <div class="subtitle">DISCOM vs Power Exchange — Uttarakhand UPCL · 33KV</div>
+  </div>
+  <div style="display:flex;gap:12px;align-items:center;">
+    <span class="badge">LIVE ANALYSIS</span>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('overview')">Overview</div>
+  <div class="tab" onclick="switchTab('discom')">DISCOM Tariff</div>
+  <div class="tab" onclick="switchTab('exchange')">Power Exchange</div>
+  <div class="tab" onclick="switchTab('comparison')">Cost Comparison</div>
+</div>
+
+<div class="content">
+  <!-- OVERVIEW TAB -->
+  <div id="tab-overview" class="tab-content active">
+    <div id="savings-banner" class="savings-banner mb-20">
+      <div class="label">Estimated Savings via Power Exchange</div>
+      <div class="amount" id="ov-savings">₹0.00</div>
+      <div class="sub" id="ov-savings-sub"></div>
+    </div>
+
+    <div class="grid4 mb-20">
+      <div class="card">
+        <h3>DISCOM Landed Cost</h3>
+        <div class="value" id="ov-discom">--<span class="unit">₹/kWh</span></div>
+      </div>
+      <div class="card">
+        <h3>Exchange Landed Cost</h3>
+        <div class="value" id="ov-exchange">--<span class="unit">₹/kWh</span></div>
+      </div>
+      <div class="card">
+        <h3>Saving per Unit</h3>
+        <div class="value" id="ov-per-unit">--<span class="unit">₹/kWh</span></div>
+      </div>
+      <div class="card">
+        <h3>Monthly Volume</h3>
+        <div class="value" id="ov-volume">--<span class="unit">MWH</span></div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>Cost Breakdown Comparison</h3>
+        <div class="chart-container"><canvas id="chartOverview"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Charge Components — Exchange</h3>
+        <div class="chart-container"><canvas id="chartPie"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DISCOM TAB -->
+  <div id="tab-discom" class="tab-content">
+    <div class="grid2 mb-20">
+      <div class="card">
+        <div class="input-group">
+          <label>Season</label>
+          <select id="d-season" onchange="recalc()">
+            <option value="summer_solar">Summer — Solar (8 Hr)</option>
+            <option value="winter_24hr" selected>Winter — 24 Hr</option>
+            <option value="winter_solar">Winter — Solar (8 Hr)</option>
+            <option value="winter_evening">Winter — Evening Peak (4 Hr)</option>
+            <option value="winter_morning">Winter — Morning Peak (3 Hr)</option>
+          </select>
+        </div>
+      </div>
+      <div class="card">
+        <div class="input-group">
+          <label>Load Factor</label>
+          <select id="d-lf" onchange="recalc()">
+            <option value="upto50" selected>Up to 50%</option>
+            <option value="above50">Above 50%</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card table-card">
+      <h3>DISCOM Tariff Structure — Uttarakhand UPCL (33KV)</h3>
+      <table>
+        <thead><tr><th>Component</th><th style="text-align:right">Rate (₹/kVAh)</th></tr></thead>
+        <tbody id="discom-table"></tbody>
+      </table>
+    </div>
+
+    <div class="card mt-20">
+      <h3>Seasonal Tariff Comparison</h3>
+      <div class="chart-container"><canvas id="chartDiscom"></canvas></div>
+    </div>
+  </div>
+
+  <!-- POWER EXCHANGE TAB -->
+  <div id="tab-exchange" class="tab-content">
+    <div class="grid3 mb-20">
+      <div class="card exchange-card selected" onclick="selectExchange('IEX')" id="ex-IEX">
+        <div class="logo">🔵</div>
+        <h3>Exchange</h3>
+        <div class="value" style="font-size:18px">IEX</div>
+        <div class="sub">Indian Energy Exchange</div>
+      </div>
+      <div class="card exchange-card" onclick="selectExchange('PXIL')" id="ex-PXIL">
+        <div class="logo">🟢</div>
+        <h3>Exchange</h3>
+        <div class="value" style="font-size:18px">PXIL</div>
+        <div class="sub">Power Exchange India Ltd</div>
+      </div>
+      <div class="card exchange-card" onclick="selectExchange('HPX')" id="ex-HPX">
+        <div class="logo">🟠</div>
+        <h3>Exchange</h3>
+        <div class="value" style="font-size:18px">HPX</div>
+        <div class="sub">Hindustan Power Exchange</div>
+      </div>
+    </div>
+
+    <div class="grid2 mb-20">
+      <div class="card">
+        <div class="input-group">
+          <label>Contract Type</label>
+          <select id="ex-contract" onchange="recalc()">
+            <option value="DAM" selected>DAM — Day Ahead Market</option>
+            <option value="TAM">TAM — Term Ahead Market</option>
+            <option value="RTM">RTM — Real Time Market</option>
+            <option value="GDAM">G-DAM — Green Day Ahead Market</option>
+            <option value="GTAM">G-TAM — Green Term Ahead Market</option>
+          </select>
+        </div>
+      </div>
+      <div class="card">
+        <div class="grid2">
+          <div class="input-group">
+            <label>Avg. Price (₹/MWH)</label>
+            <input type="number" id="ex-price" value="3379" onchange="recalc()">
+          </div>
+          <div class="input-group">
+            <label>Transaction Fee (₹/MWH)</label>
+            <input type="number" id="ex-txfee" value="23.6" step="0.1" onchange="recalc()">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid3 mb-20">
+      <div class="card">
+        <div class="input-group">
+          <label>Buying Volume (MW)</label>
+          <input type="number" id="ex-mw" value="1.25" step="0.25" onchange="recalc()">
+        </div>
+      </div>
+      <div class="card">
+        <div class="input-group">
+          <label>Duration (Hours/Day)</label>
+          <input type="number" id="ex-hrs" value="8" onchange="recalc()">
+        </div>
+      </div>
+      <div class="card">
+        <div class="input-group">
+          <label>Period (Days)</label>
+          <input type="number" id="ex-days" value="30" onchange="recalc()">
+        </div>
+      </div>
+    </div>
+
+    <div class="card table-card">
+      <h3>Open Access Charge Breakdown</h3>
+      <table>
+        <thead><tr><th>Component</th><th style="text-align:right">Rate</th><th style="text-align:right">Amount (₹)</th><th style="text-align:right">Per Unit (₹/kWh)</th></tr></thead>
+        <tbody id="exchange-table"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- COMPARISON TAB -->
+  <div id="tab-comparison" class="tab-content">
+    <div class="season-pills" id="comp-pills"></div>
+    <div class="grid2 mb-20">
+      <div class="card">
+        <h3>Side-by-Side Cost (₹/kWh)</h3>
+        <div class="chart-container"><canvas id="chartCompare"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Monthly Bill Comparison (₹)</h3>
+        <div class="chart-container"><canvas id="chartBill"></canvas></div>
+      </div>
+    </div>
+    <div class="card table-card">
+      <h3>Detailed Comparison — All Scenarios</h3>
+      <table>
+        <thead><tr><th>Season / Slot</th><th style="text-align:right">DISCOM (₹/kWh)</th><th style="text-align:right">Exchange (₹/kWh)</th><th style="text-align:right">Saving (₹/kWh)</th><th style="text-align:right">Monthly Saving (₹)</th></tr></thead>
+        <tbody id="compare-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const DISCOM = {
+  summer_solar: {
+    upto50: { base: 5.31, tod: 0, ed: 0.495, cpss: 0.39825, fppca: 0.4 },
+    above50: { base: 5.12, tod: 0, ed: 0.495, cpss: 0.384, fppca: 0.4 },
+    label: "Summer — Solar (8Hr)", hours: 8
+  },
+  winter_24hr: {
+    upto50: { base: 6.85, tod: 0.0875, ed: 0.495, cpss: 0.51375, fppca: 0.4 },
+    above50: { base: 6.60, tod: 0.084167, ed: 0.495, cpss: 0.495, fppca: 0.4 },
+    label: "Winter — 24 Hr", hours: 24
+  },
+  winter_solar: {
+    upto50: { base: 5.31, tod: 0, ed: 0.495, cpss: 0.39825, fppca: 0.4 },
+    above50: { base: 5.12, tod: 0, ed: 0.495, cpss: 0.384, fppca: 0.4 },
+    label: "Winter — Solar (8Hr)", hours: 8
+  },
+  winter_evening: {
+    upto50: { base: 8.91, tod: 0, ed: 0.495, cpss: 0.66825, fppca: 0.4 },
+    above50: { base: 8.58, tod: 0, ed: 0.495, cpss: 0.6435, fppca: 0.4 },
+    label: "Winter — Evening Peak (4Hr)", hours: 4
+  },
+  winter_morning: {
+    upto50: { base: 8.91, tod: 0, ed: 0.495, cpss: 0.66825, fppca: 0.4 },
+    above50: { base: 8.58, tod: 0, ed: 0.495, cpss: 0.6435, fppca: 0.4 },
+    label: "Winter — Morning Peak (3Hr)", hours: 3
+  }
+};
+
+const OA_CHARGES = {
+  ists_loss_pct: 4.43, stu_loss_pct: 1.03, wheeling_loss_pct: 12.25,
+  ists_charge: 511.88, stu_charge: 249.526, wheeling_charge: 227.25,
+  nldc_app_fee: 5000, nldc_sch_charge: 1, sldc_charge: 1000,
+  national_bidders: 700, css: 0.56, add_surcharge: 0,
+  green_cess: 0.1, ed: 0.5, trading_margin: 25
+};
+
+const EXCHANGE_DATA = {
+  IEX: { txFee: 23.6, name: "Indian Energy Exchange", premiumPct: 0 },
+  PXIL: { txFee: 24.0, name: "Power Exchange India Ltd", premiumPct: 0.5 },
+  HPX: { txFee: 22.0, name: "Hindustan Power Exchange", premiumPct: -0.3 }
+};
+
+const CONTRACT_MULT = { DAM: 1.0, TAM: 0.97, RTM: 1.05, GDAM: 1.15, GTAM: 1.12 };
+
+let selectedExchange = 'IEX';
+let charts = {};
+
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const ids = ['overview','discom','exchange','comparison'];
+    t.classList.toggle('active', ids[i] === id);
+  });
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  recalc();
+}
+
+function selectExchange(ex) {
+  selectedExchange = ex;
+  document.querySelectorAll('.exchange-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('ex-' + ex).classList.add('selected');
+  const data = EXCHANGE_DATA[ex];
+  document.getElementById('ex-txfee').value = data.txFee;
+  recalc();
+}
+
+function getDiscomLanded(season, lf) {
+  const d = DISCOM[season][lf];
+  return d.base + d.tod + d.ed + d.cpss + d.fppca;
+}
+
+function calcExchange() {
+  const mw = parseFloat(document.getElementById('ex-mw').value) || 1.25;
+  const hrs = parseFloat(document.getElementById('ex-hrs').value) || 8;
+  const days = parseFloat(document.getElementById('ex-days').value) || 30;
+  const price = parseFloat(document.getElementById('ex-price').value) || 3379;
+  const txFee = parseFloat(document.getElementById('ex-txfee').value) || 23.6;
+  const contract = document.getElementById('ex-contract').value;
+
+  const mult = CONTRACT_MULT[contract];
+  const exData = EXCHANGE_DATA[selectedExchange];
+  const adjPrice = price * mult * (1 + exData.premiumPct / 100);
+
+  const bidVol = mw * hrs * days; // MWH
+  const istsLoss = 1 - OA_CHARGES.ists_loss_pct / 100;
+  const stuLoss = 1 - OA_CHARGES.stu_loss_pct / 100;
+  const wheelLoss = 1 - OA_CHARGES.wheeling_loss_pct / 100;
+
+  const drawlISTS = bidVol * istsLoss;
+  const drawlSTU = drawlISTS * stuLoss;
+  const drawlFinal = drawlSTU * wheelLoss;
+
+  const energyCost = bidVol * adjPrice;
+  const istsCharge = bidVol * OA_CHARGES.ists_charge;
+  const stuCharge = bidVol * OA_CHARGES.stu_charge;
+  const wheelCharge = bidVol * OA_CHARGES.wheeling_charge;
+  const nldcApp = (OA_CHARGES.nldc_app_fee / OA_CHARGES.national_bidders) * days;
+  const nldcSch = Math.min(OA_CHARGES.nldc_sch_charge * bidVol, 200 * days);
+  const sldcCharge = OA_CHARGES.sldc_charge * days;
+  const txFeeTotal = bidVol * txFee;
+  const tradingMargin = bidVol * OA_CHARGES.trading_margin;
+
+  const statCharges = istsCharge + stuCharge + wheelCharge + nldcApp + nldcSch + sldcCharge + txFeeTotal;
+  const totalPayable = energyCost + statCharges + tradingMargin;
+
+  const costPerUnit = totalPayable / (drawlFinal * 1000); // Rs/kWh
+  const lossImpact = (adjPrice / 1000) * (1 / (istsLoss * stuLoss * wheelLoss) - 1);
+
+  const landed = costPerUnit + OA_CHARGES.css + OA_CHARGES.add_surcharge + OA_CHARGES.green_cess + OA_CHARGES.ed;
+
+  return {
+    bidVol, drawlFinal, adjPrice,
+    energyCost, istsCharge, stuCharge, wheelCharge,
+    nldcApp, nldcSch, sldcCharge, txFeeTotal, tradingMargin,
+    statCharges, totalPayable, costPerUnit, lossImpact, landed,
+    css: OA_CHARGES.css, addSurcharge: OA_CHARGES.add_surcharge,
+    greenCess: OA_CHARGES.green_cess, elecDuty: OA_CHARGES.ed,
+    perUnit: {
+      energy: adjPrice / 1000,
+      ists: istsCharge / (drawlFinal * 1000),
+      stu: stuCharge / (drawlFinal * 1000),
+      wheeling: wheelCharge / (drawlFinal * 1000),
+      nldc: (nldcApp + nldcSch) / (drawlFinal * 1000),
+      sldc: sldcCharge / (drawlFinal * 1000),
+      txFee: txFeeTotal / (drawlFinal * 1000),
+      trading: tradingMargin / (drawlFinal * 1000),
+      loss: lossImpact
+    }
+  };
+}
+
+function recalc() {
+  const season = document.getElementById('d-season').value;
+  const lf = document.getElementById('d-lf').value;
+  const ex = calcExchange();
+  const discomLanded = getDiscomLanded(season, lf);
+  const saving = discomLanded - ex.landed;
+  const monthlyVol = ex.drawlFinal * 1000;
+
+  // Overview
+  document.getElementById('ov-discom').innerHTML = `₹${discomLanded.toFixed(2)}<span class="unit">₹/kWh</span>`;
+  document.getElementById('ov-exchange').innerHTML = `₹${ex.landed.toFixed(2)}<span class="unit">₹/kWh</span>`;
+  const savClass = saving >= 0 ? 'positive' : 'negative';
+  document.getElementById('ov-per-unit').innerHTML = `<span class="${savClass}">₹${saving.toFixed(4)}</span><span class="unit">₹/kWh</span>`;
+  document.getElementById('ov-volume').innerHTML = `${ex.bidVol.toFixed(0)}<span class="unit">MWH</span>`;
+  const totalSaving = saving * monthlyVol;
+  document.getElementById('ov-savings').textContent = `₹${Math.abs(totalSaving).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}`;
+  document.getElementById('ov-savings').className = 'amount ' + (totalSaving >= 0 ? 'positive' : 'negative');
+  document.getElementById('ov-savings-sub').textContent = totalSaving >= 0
+    ? `You save ₹${saving.toFixed(4)}/kWh via exchange | ${(saving/discomLanded*100).toFixed(2)}% cheaper`
+    : `Exchange is ₹${Math.abs(saving).toFixed(4)}/kWh costlier | DISCOM is cheaper for this scenario`;
+
+  // DISCOM table
+  const dt = DISCOM[season][lf];
+  const dRows = [
+    ['Base Tariff', dt.base], ['Time of Day (ToD)', dt.tod], ['Electricity Duty', dt.ed],
+    ['Continuous Power Supply Surcharge', dt.cpss], ['FPPCA Charge', dt.fppca]
+  ];
+  let dtHtml = '';
+  dRows.forEach(r => { dtHtml += `<tr><td>${r[0]}</td><td class="num">₹${r[1].toFixed(4)}</td></tr>`; });
+  dtHtml += `<tr style="font-weight:700;background:rgba(59,130,246,0.06)"><td>LANDED DISCOM</td><td class="num">₹${discomLanded.toFixed(4)}</td></tr>`;
+  document.getElementById('discom-table').innerHTML = dtHtml;
+
+  // Exchange table
+  const eRows = [
+    ['Energy Cost @ MCP', `₹${(ex.adjPrice/1000).toFixed(4)}/kWh`, ex.energyCost, ex.perUnit.energy],
+    ['ISTS/CTU Transmission', `₹${OA_CHARGES.ists_charge}/MWH`, ex.istsCharge, ex.perUnit.ists],
+    ['STU Transmission', `₹${OA_CHARGES.stu_charge}/MWH`, ex.stuCharge, ex.perUnit.stu],
+    ['Wheeling Charge', `₹${OA_CHARGES.wheeling_charge}/MWH`, ex.wheelCharge, ex.perUnit.wheeling],
+    ['NLDC (App + Scheduling)', '—', ex.nldcApp + ex.nldcSch, ex.perUnit.nldc],
+    ['SLDC Scheduling', `₹${OA_CHARGES.sldc_charge}/day`, ex.sldcCharge, ex.perUnit.sldc],
+    ['Exchange Transaction Fee', `₹${document.getElementById('ex-txfee').value}/MWH`, ex.txFeeTotal, ex.perUnit.txFee],
+    ['Trading Margin', `₹${OA_CHARGES.trading_margin}/MWH`, ex.tradingMargin, ex.perUnit.trading],
+  ];
+  let etHtml = '';
+  eRows.forEach(r => { etHtml += `<tr><td>${r[0]}</td><td class="num">${r[1]}</td><td class="num">₹${r[2].toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</td><td class="num">₹${r[3].toFixed(6)}</td></tr>`; });
+  etHtml += `<tr style="font-weight:600;border-top:2px solid var(--border)"><td>Sub-total (Energy+Charges)</td><td></td><td class="num">₹${ex.totalPayable.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</td><td class="num">₹${ex.costPerUnit.toFixed(4)}</td></tr>`;
+  etHtml += `<tr><td>Cross Subsidy Surcharge</td><td></td><td></td><td class="num">₹${ex.css.toFixed(4)}</td></tr>`;
+  etHtml += `<tr><td>Electricity Duty</td><td></td><td></td><td class="num">₹${ex.elecDuty.toFixed(4)}</td></tr>`;
+  etHtml += `<tr><td>Green Cess</td><td></td><td></td><td class="num">₹${ex.greenCess.toFixed(4)}</td></tr>`;
+  etHtml += `<tr style="font-weight:700;background:rgba(16,185,129,0.08)"><td>FINAL LANDED COST</td><td></td><td></td><td class="num">₹${ex.landed.toFixed(4)}</td></tr>`;
+  document.getElementById('exchange-table').innerHTML = etHtml;
+
+  // Comparison table
+  let ctHtml = '';
+  Object.keys(DISCOM).forEach(s => {
+    const dL = getDiscomLanded(s, lf);
+    const sv = dL - ex.landed;
+    const mSv = sv * monthlyVol;
+    ctHtml += `<tr>
+      <td>${DISCOM[s].label}</td>
+      <td class="num">₹${dL.toFixed(4)}</td>
+      <td class="num">₹${ex.landed.toFixed(4)}</td>
+      <td class="num ${sv >= 0 ? 'positive' : 'negative'}">₹${sv.toFixed(4)}</td>
+      <td class="num ${mSv >= 0 ? 'positive' : 'negative'}">₹${mSv.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</td>
+    </tr>`;
+  });
+  document.getElementById('compare-table').innerHTML = ctHtml;
+
+  updateCharts(discomLanded, ex);
+}
+
+function updateCharts(discomLanded, ex) {
+  const lf = document.getElementById('d-lf').value;
+
+  // Overview bar chart
+  if (charts.overview) charts.overview.destroy();
+  charts.overview = new Chart(document.getElementById('chartOverview'), {
+    type: 'bar',
+    data: {
+      labels: ['DISCOM', 'Exchange'],
+      datasets: [{
+        label: '₹/kWh',
+        data: [discomLanded, ex.landed],
+        backgroundColor: ['#ef4444aa', '#3b82f6aa'],
+        borderColor: ['#ef4444', '#3b82f6'],
+        borderWidth: 2, borderRadius: 6
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, grid: { color: '#2a3a4d' }, ticks: { color: '#8899aa' } }, x: { grid: { display: false }, ticks: { color: '#8899aa' } } } }
+  });
+
+  // Pie chart
+  if (charts.pie) charts.pie.destroy();
+  charts.pie = new Chart(document.getElementById('chartPie'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Energy', 'ISTS', 'STU', 'Wheeling', 'NLDC/SLDC', 'Tx Fee', 'CSS+ED+Cess'],
+      datasets: [{ data: [
+        ex.perUnit.energy, ex.perUnit.ists, ex.perUnit.stu, ex.perUnit.wheeling,
+        ex.perUnit.nldc + ex.perUnit.sldc, ex.perUnit.txFee + ex.perUnit.trading,
+        ex.css + ex.elecDuty + ex.greenCess
+      ], backgroundColor: ['#3b82f6','#ef4444','#f59e0b','#10b981','#8b5cf6','#ec4899','#6366f1'] }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#8899aa', boxWidth: 12, font: { size: 11 } } } } }
+  });
+
+  // Discom seasonal chart
+  if (charts.discom) charts.discom.destroy();
+  const seasons = Object.keys(DISCOM);
+  charts.discom = new Chart(document.getElementById('chartDiscom'), {
+    type: 'bar',
+    data: {
+      labels: seasons.map(s => DISCOM[s].label.replace('Winter — ','W:').replace('Summer — ','S:')),
+      datasets: [
+        { label: 'Base', data: seasons.map(s => DISCOM[s][lf].base), backgroundColor: '#3b82f6' },
+        { label: 'ToD', data: seasons.map(s => DISCOM[s][lf].tod), backgroundColor: '#f59e0b' },
+        { label: 'ED', data: seasons.map(s => DISCOM[s][lf].ed), backgroundColor: '#10b981' },
+        { label: 'CPSS', data: seasons.map(s => DISCOM[s][lf].cpss), backgroundColor: '#8b5cf6' },
+        { label: 'FPPCA', data: seasons.map(s => DISCOM[s][lf].fppca), backgroundColor: '#ec4899' },
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#8899aa', boxWidth: 12 } } },
+      scales: { x: { stacked: true, grid: { display: false }, ticks: { color: '#8899aa', font: { size: 10 } } }, y: { stacked: true, grid: { color: '#2a3a4d' }, ticks: { color: '#8899aa' } } } }
+  });
+
+  // Comparison charts
+  if (charts.compare) charts.compare.destroy();
+  charts.compare = new Chart(document.getElementById('chartCompare'), {
+    type: 'bar',
+    data: {
+      labels: seasons.map(s => DISCOM[s].label.replace('Winter — ','W:').replace('Summer — ','S:')),
+      datasets: [
+        { label: 'DISCOM', data: seasons.map(s => getDiscomLanded(s, lf)), backgroundColor: '#ef4444aa', borderColor: '#ef4444', borderWidth: 1 },
+        { label: 'Exchange', data: seasons.map(() => ex.landed), backgroundColor: '#3b82f6aa', borderColor: '#3b82f6', borderWidth: 1 }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#8899aa' } } },
+      scales: { x: { grid: { display: false }, ticks: { color: '#8899aa', font: { size: 10 } } }, y: { grid: { color: '#2a3a4d' }, ticks: { color: '#8899aa' } } } }
+  });
+
+  if (charts.bill) charts.bill.destroy();
+  const vol = ex.drawlFinal * 1000;
+  charts.bill = new Chart(document.getElementById('chartBill'), {
+    type: 'bar',
+    data: {
+      labels: seasons.map(s => DISCOM[s].label.replace('Winter — ','W:').replace('Summer — ','S:')),
+      datasets: [
+        { label: 'DISCOM Bill', data: seasons.map(s => getDiscomLanded(s, lf) * vol), backgroundColor: '#ef4444aa' },
+        { label: 'Exchange Bill', data: seasons.map(() => ex.landed * vol), backgroundColor: '#3b82f6aa' }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#8899aa' } } },
+      scales: { x: { grid: { display: false }, ticks: { color: '#8899aa', font: { size: 10 } } }, y: { grid: { color: '#2a3a4d' }, ticks: { color: '#8899aa', callback: v => '₹' + (v/1000).toFixed(0) + 'K' } } } }
+  });
+}
+
+recalc();
+</script>
+</body>
+</html>
