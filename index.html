@@ -199,6 +199,58 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
           <input type="number" id="a-addsur" value="0" step="0.01">
         </div>
       </div>
+
+      <div class="admin-title" style="margin-top:16px">⚡ Exchange & Statutory Charges</div>
+      <div class="admin-grid">
+        <div class="form-group">
+          <label>NLDC App Fee (₹/day)</label>
+          <input type="number" id="a-nldc-fee" value="5000" step="100">
+        </div>
+        <div class="form-group">
+          <label>National Bidders (No.)</label>
+          <input type="number" id="a-nldc-bidders" value="700" step="10">
+        </div>
+        <div class="form-group">
+          <label>NLDC Sch & Op (₹/MWh)</label>
+          <input type="number" id="a-nldc-sch" value="1" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>SLDC Charge (₹/day)</label>
+          <input type="number" id="a-sldc" value="0" step="100">
+        </div>
+        <div class="form-group">
+          <label>IEX Txn Fee (₹/MWh)</label>
+          <input type="number" id="a-iex-txn" value="23.6" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>Member Trading (₹/MWh)</label>
+          <input type="number" id="a-trading" value="25" step="1">
+        </div>
+        <div class="form-group">
+          <label>Electricity Duty (₹/unit)</label>
+          <input type="number" id="a-ed" value="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Green Cess (₹/unit)</label>
+          <input type="number" id="a-green" value="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>RPO (₹/unit)</label>
+          <input type="number" id="a-rpo" value="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Buying Volume (MW)</label>
+          <input type="number" id="a-mw" value="1.25" step="0.25">
+        </div>
+        <div class="form-group">
+          <label>Duration (Hrs/Day)</label>
+          <input type="number" id="a-hrs" value="8" step="1">
+        </div>
+        <div class="form-group">
+          <label>Period (Days)</label>
+          <input type="number" id="a-days" value="30" step="1">
+        </div>
+      </div>
       <div style="font-size:11px;color:var(--muted);margin-top:6px">* ISTS charges & loss updated manually. State charges auto-populated from database on state/voltage change.</div>
     </div>
   </div>
@@ -804,6 +856,9 @@ function autoFillOA() {
   document.getElementById('a-wheel-loss').value = oa.wheelLoss;
   document.getElementById('a-css').value = oa.css;
   document.getElementById('a-addsur').value = oa.addSurcharge;
+  document.getElementById('a-sldc').value = oa.sldc || 0;
+  document.getElementById('a-ed').value = st.ed ? (st.ed[document.getElementById('f-category').value] || 0) : 0;
+  document.getElementById('a-green').value = st.greenCess || 0;
 }
 
 document.getElementById('f-voltage').addEventListener('change', () => { autoFillOA(); recalc(); });
@@ -826,6 +881,20 @@ function recalc() {
   const css = parseFloat(document.getElementById('a-css').value) || 0;
   const addSur = parseFloat(document.getElementById('a-addsur').value) || 0;
 
+  // Exchange & statutory inputs
+  const nldcFee = parseFloat(document.getElementById('a-nldc-fee').value) || 0;
+  const nldcBidders = parseFloat(document.getElementById('a-nldc-bidders').value) || 700;
+  const nldcSch = parseFloat(document.getElementById('a-nldc-sch').value) || 0;
+  const sldcPerDay = parseFloat(document.getElementById('a-sldc').value) || 0;
+  const iexTxnFee = parseFloat(document.getElementById('a-iex-txn').value) || 0;
+  const tradingMargin = parseFloat(document.getElementById('a-trading').value) || 0;
+  const elecDuty = parseFloat(document.getElementById('a-ed').value) || 0;
+  const greenCess = parseFloat(document.getElementById('a-green').value) || 0;
+  const rpo = parseFloat(document.getElementById('a-rpo').value) || 0;
+  const buyMW = parseFloat(document.getElementById('a-mw').value) || 1.25;
+  const hrsDay = parseFloat(document.getElementById('a-hrs').value) || 8;
+  const days = parseFloat(document.getElementById('a-days').value) || 30;
+
   // DISCOM tariff
   let tariffData;
   if (cat === 'commercial' && st.tariff.commercial && st.tariff.commercial[v]) {
@@ -847,30 +916,59 @@ function recalc() {
   document.getElementById('r-d-fuel').textContent = fuelSurcharge.toFixed(2);
   document.getElementById('r-d-total').textContent = discomTotal.toFixed(2);
 
-  // OA charges
-  const totalLossFactor = (1 - istsLoss/100) * (1 - stuLoss/100) * (1 - wheelLoss/100);
-  const effectiveIEX = iexPrice / totalLossFactor;
-  const otherCharges = 0;
+  // Volume calculations
+  const bidVolMWH = buyMW * hrsDay * days;
+  const drawlISTS = bidVolMWH * (1 - istsLoss / 100);
+  const drawlSTU = drawlISTS * (1 - stuLoss / 100);
+  const drawlFinal = drawlSTU * (1 - wheelLoss / 100);
+  const drawlKWH = drawlFinal * 1000;
+
+  // Statutory charges (total Rs amounts)
+  const istsTotal = bidVolMWH * istsCharge * 1000;
+  const stuTotal = bidVolMWH * stuCharge * 1000;
+  const wheelTotal = bidVolMWH * wheelCharge * 1000;
+  const nldcAppTotal = (nldcFee / nldcBidders) * days;
+  const nldcSchTotal = Math.min(nldcSch * bidVolMWH, 200 * days);
+  const sldcTotal = sldcPerDay * days;
+  const iexTxnTotal = bidVolMWH * iexTxnFee;
+  const tradingTotal = bidVolMWH * tradingMargin;
+  const energyCostTotal = bidVolMWH * iexPrice * 1000;
+
+  // Per unit (Rs/kWh) based on final drawl
+  const puISTS = drawlKWH > 0 ? istsTotal / drawlKWH : 0;
+  const puSTU = drawlKWH > 0 ? stuTotal / drawlKWH : 0;
+  const puWheel = drawlKWH > 0 ? wheelTotal / drawlKWH : 0;
+  const puNLDC = drawlKWH > 0 ? (nldcAppTotal + nldcSchTotal) / drawlKWH : 0;
+  const puSLDC = drawlKWH > 0 ? sldcTotal / drawlKWH : 0;
+  const puIEXTxn = drawlKWH > 0 ? iexTxnTotal / drawlKWH : 0;
+  const puTrading = drawlKWH > 0 ? tradingTotal / drawlKWH : 0;
+  const puEnergy = drawlKWH > 0 ? energyCostTotal / drawlKWH : 0;
 
   const oaComponents = {
-    'ISTS Charges': istsCharge,
-    'STU Charges': stuCharge,
-    'Wheeling Charges': wheelCharge,
+    'ISTS Charges': puISTS,
+    'STU Charges': puSTU,
+    'Wheeling Charges': puWheel,
+    'NLDC (App + Scheduling)': puNLDC,
+    'SLDC Charges': puSLDC,
+    'IEX Transaction Fee': puIEXTxn,
+    'Member Trading Margin': puTrading,
     'Cross Subsidy Surcharge': css,
     'Additional Surcharge': addSur,
-    'Other Charges*': otherCharges
+    'Electricity Duty': elecDuty,
+    'Green Cess': greenCess,
+    'RPO': rpo
   };
 
   let oaHtml = '';
   const pieData = [];
   const pieLabels = [];
-  const pieColors = ['#2563eb','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899'];
+  const pieColors = ['#2563eb','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#f97316','#84cc16','#a855f7','#14b8a6','#e11d48'];
   let totalOACharges = 0;
 
   Object.entries(oaComponents).forEach(([label, val]) => {
     oaHtml += `<div class="label">${label}</div><div class="val">${val.toFixed(2)}</div>`;
     totalOACharges += val;
-    if (val > 0) { pieLabels.push(label); pieData.push(val); }
+    if (val > 0) { pieLabels.push(label); pieData.push(parseFloat(val.toFixed(4))); }
   });
   document.getElementById('oa-charges').innerHTML = oaHtml;
 
@@ -879,8 +977,8 @@ function recalc() {
   document.getElementById('r-stu-loss').textContent = stuLoss + '%';
   document.getElementById('r-wh-loss').textContent = wheelLoss + '%';
 
-  // Landed cost = IEX adjusted for losses + all OA charges
-  const landedCost = effectiveIEX + totalOACharges;
+  // Landed cost = IEX energy adjusted for losses + all OA charges
+  const landedCost = puEnergy + totalOACharges;
 
   // Savings = DISCOM total - Landed OA cost
   const saving = discomTotal - landedCost;
