@@ -3,579 +3,941 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Industrial Power Cost Analysis</title>
+<title>PowerLogic — Industrial Cost Analysis</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-:root {
-  --bg: #0f1724; --surface: #1a2332; --card: #1e2a3a; --border: #2a3a4d;
-  --text: #e8edf3; --muted: #8899aa; --accent: #3b82f6; --accent2: #10b981;
-  --danger: #ef4444; --warning: #f59e0b; --purple: #8b5cf6;
-}
-body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-.header { background: linear-gradient(135deg, #1a2332 0%, #0f1724 100%); border-bottom: 1px solid var(--border); padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; }
-.header h1 { font-size: 20px; font-weight: 600; }
-.header h1 span { color: var(--accent); }
-.header .subtitle { color: var(--muted); font-size: 13px; }
-.badge { background: var(--accent); color: #fff; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#f0f4f8;--surface:#fff;--card:#fff;--border:#e2e8f0;--text:#1e293b;--muted:#64748b;--accent:#1e3a5f;--accent2:#2563eb;--green:#10b981;--red:#ef4444;--orange:#f59e0b;--light-blue:#eff6ff;--input-bg:#f8fafc}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
-.tabs { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 32px; gap: 4px; }
-.tab { padding: 12px 20px; cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 500; border-bottom: 2px solid transparent; transition: all 0.2s; }
-.tab:hover { color: var(--text); }
-.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.header{background:linear-gradient(135deg,#1e3a5f 0%,#0f2744 100%);padding:18px 32px;display:flex;align-items:center;justify-content:space-between;color:#fff}
+.header h1{font-size:22px;font-weight:700;letter-spacing:-0.3px}
+.header h1 span{color:#60a5fa}
+.header .sub{font-size:12px;color:#94a3b8;margin-top:2px}
 
-.content { padding: 24px 32px; max-width: 1400px; margin: 0 auto; }
-.tab-content { display: none; }
-.tab-content.active { display: block; }
+.main-layout{display:grid;grid-template-columns:420px 1fr;gap:0;min-height:calc(100vh - 62px)}
 
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-.grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.left-panel{background:var(--surface);border-right:1px solid var(--border);padding:28px 24px;overflow-y:auto}
+.right-panel{padding:28px 32px;overflow-y:auto}
 
-.card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
-.card h3 { font-size: 13px; color: var(--muted); font-weight: 500; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
-.card .value { font-size: 28px; font-weight: 700; }
-.card .unit { font-size: 13px; color: var(--muted); margin-left: 4px; }
-.card .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
-.positive { color: var(--accent2); }
-.negative { color: var(--danger); }
+.section-title{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px}
 
-.table-card { overflow: hidden; }
-.table-card h3 { padding: 0 0 12px 0; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th { text-align: left; padding: 10px 12px; background: rgba(59,130,246,0.08); color: var(--accent); font-weight: 600; border-bottom: 1px solid var(--border); }
-td { padding: 9px 12px; border-bottom: 1px solid rgba(42,58,77,0.5); }
-tr:hover td { background: rgba(59,130,246,0.04); }
-td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.3px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 
-select, input[type="number"] {
-  background: var(--surface); border: 1px solid var(--border); color: var(--text);
-  padding: 8px 12px; border-radius: 6px; font-size: 13px; outline: none;
-}
-select:focus, input:focus { border-color: var(--accent); }
-label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; }
-.input-group { display: flex; flex-direction: column; gap: 4px; }
+select,input[type="number"]{width:100%;background:var(--input-bg);border:1.5px solid var(--border);color:var(--text);padding:10px 12px;border-radius:8px;font-size:13px;outline:none;transition:border-color 0.2s}
+select:focus,input:focus{border-color:var(--accent2);box-shadow:0 0 0 3px rgba(37,99,235,0.1)}
+select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
 
-.chart-container { position: relative; height: 300px; }
-.bar-compare { display: flex; align-items: flex-end; gap: 32px; height: 200px; justify-content: center; margin: 20px 0; }
-.bar-wrapper { text-align: center; }
-.bar { width: 80px; border-radius: 6px 6px 0 0; transition: height 0.5s; min-height: 20px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 8px; font-weight: 700; font-size: 14px; }
-.bar-label { margin-top: 8px; font-size: 12px; color: var(--muted); }
+.btn-row{display:flex;gap:10px;justify-content:center;margin-top:20px}
+.btn{padding:10px 28px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all 0.2s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#0f2744}
+.btn-clear{background:var(--input-bg);color:var(--muted);border:1.5px solid var(--border)}
+.btn-clear:hover{background:#e2e8f0}
 
-.savings-banner { background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(59,130,246,0.1)); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 20px 24px; text-align: center; margin-bottom: 20px; }
-.savings-banner .amount { font-size: 36px; font-weight: 800; color: var(--accent2); }
-.savings-banner .label { font-size: 14px; color: var(--muted); }
+.result-section{margin-bottom:24px}
+.result-title{font-size:15px;font-weight:700;color:var(--accent2);margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--accent2)}
 
-.season-pills { display: flex; gap: 8px; margin-bottom: 16px; }
-.pill { padding: 6px 16px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid var(--border); color: var(--muted); transition: all 0.2s; }
-.pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.charges-grid{display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:13px}
+.charges-grid .label{color:var(--text);font-weight:500;padding:5px 0}
+.charges-grid .val{text-align:right;font-weight:600;font-variant-numeric:tabular-nums;padding:5px 0}
 
-.exchange-card { border: 2px solid transparent; cursor: pointer; transition: all 0.2s; }
-.exchange-card.selected { border-color: var(--accent); box-shadow: 0 0 20px rgba(59,130,246,0.15); }
-.exchange-card .logo { font-size: 24px; margin-bottom: 8px; }
+.chart-and-data{display:grid;grid-template-columns:1fr 280px;gap:24px;align-items:start}
 
-.tooltip { position: relative; }
-.tooltip::after { content: attr(data-tip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 11px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
-.tooltip:hover::after { opacity: 1; }
+.info-box{background:var(--light-blue);border:1px solid #bfdbfe;border-radius:10px;padding:16px;margin-top:16px}
+.info-box .title{font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;margin-bottom:10px;letter-spacing:0.3px}
+.info-box .row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0}
+.info-box .row .k{color:var(--muted)}
+.info-box .row .v{font-weight:600}
 
-.flex-between { display: flex; justify-content: space-between; align-items: center; }
-.mt-20 { margin-top: 20px; }
-.mb-20 { margin-bottom: 20px; }
-.gap-12 { gap: 12px; }
+.summary-boxes{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px}
+.summary-box{border-radius:10px;padding:16px;border:1px solid var(--border)}
+.summary-box .label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
+.summary-box .value{font-size:22px;font-weight:800}
+.sb-landed{background:#f0fdf4;border-color:#bbf7d0}
+.sb-landed .label{color:#166534}
+.sb-landed .value{color:#15803d}
+.sb-saving{background:#eff6ff;border-color:#bfdbfe}
+.sb-saving .label{color:#1e40af}
+.sb-saving .value{color:#2563eb}
+.sb-negative .value{color:var(--red)}
+
+.chart-container{position:relative;width:260px;height:260px;margin:0 auto}
+
+.divider{height:1px;background:var(--border);margin:20px 0}
+
+.admin-section{margin-top:20px;padding-top:16px;border-top:2px dashed var(--border)}
+.admin-title{font-size:12px;font-weight:700;color:var(--orange);margin-bottom:12px;text-transform:uppercase}
+.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.admin-grid .form-group{margin-bottom:8px}
+
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase}
+.tag-green{background:#dcfce7;color:#166534}
+.tag-blue{background:#dbeafe;color:#1e40af}
 </style>
 </head>
 <body>
 
 <div class="header">
   <div>
-    <h1><span>⚡</span> Industrial Power Cost Analyzer</h1>
-    <div class="subtitle">DISCOM vs Power Exchange — Uttarakhand UPCL · 33KV</div>
+    <h1>⚡ <span>PowerLogic</span> — Cost Analysis Platform</h1>
+    <div class="sub">Industrial Open Access vs DISCOM Consumption Analysis</div>
   </div>
-  <div style="display:flex;gap:12px;align-items:center;">
-    <span class="badge">LIVE ANALYSIS</span>
+  <div style="display:flex;gap:10px;align-items:center">
+    <span class="tag tag-green">FY 2026-27</span>
+    <span class="tag tag-blue">v2.0</span>
   </div>
 </div>
 
-<div class="tabs">
-  <div class="tab active" onclick="switchTab('overview')">Overview</div>
-  <div class="tab" onclick="switchTab('discom')">DISCOM Tariff</div>
-  <div class="tab" onclick="switchTab('exchange')">Power Exchange</div>
-  <div class="tab" onclick="switchTab('comparison')">Cost Comparison</div>
-</div>
+<div class="main-layout">
+  <!-- LEFT PANEL: INPUTS -->
+  <div class="left-panel">
+    <div class="section-title">Input Parameters</div>
 
-<div class="content">
-  <!-- OVERVIEW TAB -->
-  <div id="tab-overview" class="tab-content active">
-    <div id="savings-banner" class="savings-banner mb-20">
-      <div class="label">Estimated Savings via Power Exchange</div>
-      <div class="amount" id="ov-savings">₹0.00</div>
-      <div class="sub" id="ov-savings-sub"></div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>State (Discom)</label>
+        <select id="f-state" onchange="onStateChange()">
+          <option value="UP">Uttar Pradesh</option>
+          <option value="UK" selected>Uttarakhand</option>
+          <option value="MH">Maharashtra</option>
+          <option value="GUJ">Gujarat</option>
+          <option value="HR">Haryana</option>
+          <option value="RAJ">Rajasthan</option>
+          <option value="MP">Madhya Pradesh</option>
+          <option value="TG">Telangana</option>
+          <option value="AP">Andhra Pradesh</option>
+          <option value="TN">Tamil Nadu</option>
+          <option value="KRN">Karnataka</option>
+          <option value="PUB">Punjab</option>
+          <option value="CG">Chhattisgarh</option>
+          <option value="DL">Delhi</option>
+          <option value="BIHAR">Bihar</option>
+          <option value="Orissa">Odisha</option>
+          <option value="WB">West Bengal</option>
+          <option value="HP">Himachal Pradesh</option>
+          <option value="Jharkhand">Jharkhand</option>
+          <option value="GOA">Goa</option>
+          <option value="Assam">Assam</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Consumer Category</label>
+        <select id="f-category" onchange="recalc()">
+          <option value="industrial" selected>Industrial</option>
+          <option value="commercial">Commercial</option>
+        </select>
+      </div>
     </div>
 
-    <div class="grid4 mb-20">
-      <div class="card">
-        <h3>DISCOM Landed Cost</h3>
-        <div class="value" id="ov-discom">--<span class="unit">₹/kWh</span></div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Voltage Level (kV)</label>
+        <select id="f-voltage" onchange="recalc()"></select>
       </div>
-      <div class="card">
-        <h3>Exchange Landed Cost</h3>
-        <div class="value" id="ov-exchange">--<span class="unit">₹/kWh</span></div>
-      </div>
-      <div class="card">
-        <h3>Saving per Unit</h3>
-        <div class="value" id="ov-per-unit">--<span class="unit">₹/kWh</span></div>
-      </div>
-      <div class="card">
-        <h3>Monthly Volume</h3>
-        <div class="value" id="ov-volume">--<span class="unit">MWH</span></div>
+      <div class="form-group">
+        <label>TOD Month</label>
+        <select id="f-month" onchange="recalc()">
+          <option value="apr_sep" selected>Apr - Sept</option>
+          <option value="oct_mar">Oct - Mar</option>
+        </select>
       </div>
     </div>
 
-    <div class="grid2">
-      <div class="card">
-        <h3>Cost Breakdown Comparison</h3>
-        <div class="chart-container"><canvas id="chartOverview"></canvas></div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>TOD Slot</label>
+        <select id="f-tod" onchange="recalc()"></select>
       </div>
-      <div class="card">
-        <h3>Charge Components — Exchange</h3>
+      <div class="form-group">
+        <label>IEX Price (Rs./unit)</label>
+        <input type="number" id="f-iex" value="3" step="0.1">
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-clear" onclick="clearForm()">Clear</button>
+      <button class="btn btn-primary" onclick="recalc()">Submit</button>
+    </div>
+
+    <!-- ADMIN: Manually Updatable Fields -->
+    <div class="admin-section">
+      <div class="admin-title">⚙ Adjustable Charges (ISTS & State Level)</div>
+      <div class="admin-grid">
+        <div class="form-group">
+          <label>ISTS Charges (₹/unit)</label>
+          <input type="number" id="a-ists" value="0.45" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>ISTS Loss (%)</label>
+          <input type="number" id="a-ists-loss" value="3.9" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>STU Charges (₹/unit)</label>
+          <input type="number" id="a-stu" value="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>STU Loss (%)</label>
+          <input type="number" id="a-stu-loss" value="0" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>Wheeling Charges (₹/unit)</label>
+          <input type="number" id="a-wheel" value="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Wheeling Loss (%)</label>
+          <input type="number" id="a-wheel-loss" value="0" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>CSS (₹/unit)</label>
+          <input type="number" id="a-css" value="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Addl. Surcharge (₹/unit)</label>
+          <input type="number" id="a-addsur" value="0" step="0.01">
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">* ISTS charges & loss updated manually. State charges auto-populated from database on state/voltage change.</div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL: RESULTS -->
+  <div class="right-panel">
+    <div class="chart-and-data">
+      <div>
+        <div class="result-title">Open Access Charges (Rs./KWh)</div>
+        <div class="charges-grid" id="oa-charges"></div>
+      </div>
+      <div>
         <div class="chart-container"><canvas id="chartPie"></canvas></div>
       </div>
     </div>
-  </div>
 
-  <!-- DISCOM TAB -->
-  <div id="tab-discom" class="tab-content">
-    <div class="grid2 mb-20">
-      <div class="card">
-        <div class="input-group">
-          <label>Season</label>
-          <select id="d-season" onchange="recalc()">
-            <option value="summer_solar">Summer — Solar (8 Hr)</option>
-            <option value="winter_24hr" selected>Winter — 24 Hr</option>
-            <option value="winter_solar">Winter — Solar (8 Hr)</option>
-            <option value="winter_evening">Winter — Evening Peak (4 Hr)</option>
-            <option value="winter_morning">Winter — Morning Peak (3 Hr)</option>
-          </select>
-        </div>
+    <div class="summary-boxes">
+      <div class="info-box">
+        <div class="title">Open Access Losses (%)</div>
+        <div class="row"><span class="k">ISTS Losses :</span><span class="v" id="r-ists-loss">3.9%</span></div>
+        <div class="row"><span class="k">STU Losses :</span><span class="v" id="r-stu-loss">0%</span></div>
+        <div class="row"><span class="k">Wheeling Losses :</span><span class="v" id="r-wh-loss">0%</span></div>
       </div>
-      <div class="card">
-        <div class="input-group">
-          <label>Load Factor</label>
-          <select id="d-lf" onchange="recalc()">
-            <option value="upto50" selected>Up to 50%</option>
-            <option value="above50">Above 50%</option>
-          </select>
-        </div>
+      <div class="info-box">
+        <div class="title">DISCOM Tariff** (Rs./KWh)</div>
+        <div class="row"><span class="k">Energy Charge :</span><span class="v" id="r-d-energy">0</span></div>
+        <div class="row"><span class="k">TOD Charge :</span><span class="v" id="r-d-tod">0</span></div>
+        <div class="row"><span class="k">Fuel Surcharge :</span><span class="v" id="r-d-fuel">0</span></div>
+        <div class="row"><span class="k">Total Charges :</span><span class="v" id="r-d-total" style="color:var(--accent2)">0</span></div>
       </div>
     </div>
 
-    <div class="card table-card">
-      <h3>DISCOM Tariff Structure — Uttarakhand UPCL (33KV)</h3>
-      <table>
-        <thead><tr><th>Component</th><th style="text-align:right">Rate (₹/kVAh)</th></tr></thead>
-        <tbody id="discom-table"></tbody>
-      </table>
-    </div>
-
-    <div class="card mt-20">
-      <h3>Seasonal Tariff Comparison</h3>
-      <div class="chart-container"><canvas id="chartDiscom"></canvas></div>
-    </div>
-  </div>
-
-  <!-- POWER EXCHANGE TAB -->
-  <div id="tab-exchange" class="tab-content">
-    <div class="grid3 mb-20">
-      <div class="card exchange-card selected" onclick="selectExchange('IEX')" id="ex-IEX">
-        <div class="logo">🔵</div>
-        <h3>Exchange</h3>
-        <div class="value" style="font-size:18px">IEX</div>
-        <div class="sub">Indian Energy Exchange</div>
+    <div class="summary-boxes" style="margin-top:14px">
+      <div class="summary-box sb-landed">
+        <div class="label">Landed Cost (Rs./KWh) :</div>
+        <div class="value" id="r-landed">0.00</div>
       </div>
-      <div class="card exchange-card" onclick="selectExchange('PXIL')" id="ex-PXIL">
-        <div class="logo">🟢</div>
-        <h3>Exchange</h3>
-        <div class="value" style="font-size:18px">PXIL</div>
-        <div class="sub">Power Exchange India Ltd</div>
-      </div>
-      <div class="card exchange-card" onclick="selectExchange('HPX')" id="ex-HPX">
-        <div class="logo">🟠</div>
-        <h3>Exchange</h3>
-        <div class="value" style="font-size:18px">HPX</div>
-        <div class="sub">Hindustan Power Exchange</div>
+      <div class="summary-box sb-saving" id="r-saving-box">
+        <div class="label">Savings (Rs./KWh) :</div>
+        <div class="value" id="r-saving">0.00</div>
       </div>
     </div>
 
-    <div class="grid2 mb-20">
-      <div class="card">
-        <div class="input-group">
-          <label>Contract Type</label>
-          <select id="ex-contract" onchange="recalc()">
-            <option value="DAM" selected>DAM — Day Ahead Market</option>
-            <option value="TAM">TAM — Term Ahead Market</option>
-            <option value="RTM">RTM — Real Time Market</option>
-            <option value="GDAM">G-DAM — Green Day Ahead Market</option>
-            <option value="GTAM">G-TAM — Green Term Ahead Market</option>
-          </select>
-        </div>
-      </div>
-      <div class="card">
-        <div class="grid2">
-          <div class="input-group">
-            <label>Avg. Price (₹/MWH)</label>
-            <input type="number" id="ex-price" value="3379" onchange="recalc()">
-          </div>
-          <div class="input-group">
-            <label>Transaction Fee (₹/MWH)</label>
-            <input type="number" id="ex-txfee" value="23.6" step="0.1" onchange="recalc()">
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="grid3 mb-20">
-      <div class="card">
-        <div class="input-group">
-          <label>Buying Volume (MW)</label>
-          <input type="number" id="ex-mw" value="1.25" step="0.25" onchange="recalc()">
-        </div>
-      </div>
-      <div class="card">
-        <div class="input-group">
-          <label>Duration (Hours/Day)</label>
-          <input type="number" id="ex-hrs" value="8" onchange="recalc()">
-        </div>
-      </div>
-      <div class="card">
-        <div class="input-group">
-          <label>Period (Days)</label>
-          <input type="number" id="ex-days" value="30" onchange="recalc()">
-        </div>
-      </div>
-    </div>
-
-    <div class="card table-card">
-      <h3>Open Access Charge Breakdown</h3>
-      <table>
-        <thead><tr><th>Component</th><th style="text-align:right">Rate</th><th style="text-align:right">Amount (₹)</th><th style="text-align:right">Per Unit (₹/kWh)</th></tr></thead>
-        <tbody id="exchange-table"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- COMPARISON TAB -->
-  <div id="tab-comparison" class="tab-content">
-    <div class="season-pills" id="comp-pills"></div>
-    <div class="grid2 mb-20">
-      <div class="card">
-        <h3>Side-by-Side Cost (₹/kWh)</h3>
-        <div class="chart-container"><canvas id="chartCompare"></canvas></div>
-      </div>
-      <div class="card">
-        <h3>Monthly Bill Comparison (₹)</h3>
-        <div class="chart-container"><canvas id="chartBill"></canvas></div>
-      </div>
-    </div>
-    <div class="card table-card">
-      <h3>Detailed Comparison — All Scenarios</h3>
-      <table>
-        <thead><tr><th>Season / Slot</th><th style="text-align:right">DISCOM (₹/kWh)</th><th style="text-align:right">Exchange (₹/kWh)</th><th style="text-align:right">Saving (₹/kWh)</th><th style="text-align:right">Monthly Saving (₹)</th></tr></thead>
-        <tbody id="compare-table"></tbody>
-      </table>
-    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:10px">** DISCOM tariff based on SERC tariff orders FY2026-27. Other charges* may include SLDC, exchange fees, trading margin, etc.</div>
   </div>
 </div>
 
 <script>
-const DISCOM = {
-  summer_solar: {
-    upto50: { base: 5.31, tod: 0, ed: 0.495, cpss: 0.39825, fppca: 0.4 },
-    above50: { base: 5.12, tod: 0, ed: 0.495, cpss: 0.384, fppca: 0.4 },
-    label: "Summer — Solar (8Hr)", hours: 8
+// ==================== DATABASE ====================
+const DB = {
+  UK: {
+    name: "Uttarakhand",
+    voltages: ["11", "33"],
+    tariff: {
+      industrial: {
+        "11": { upto50: { base: 6.85, morningPeak: 8.905, solar: 5.30875, eveningPeak: 8.905, normal: 6.85, summerSolar: 5.30875, summerEveningPeak: 8.905, summerNormal: 6.85 },
+                above50: { base: 6.60, morningPeak: 8.58, solar: 5.115, eveningPeak: 8.58, normal: 6.60, summerSolar: 5.115, summerEveningPeak: 8.58, summerNormal: 6.60 } },
+        "33": { upto50: { base: 6.85, morningPeak: 8.905, solar: 5.30875, eveningPeak: 8.905, normal: 6.85, summerSolar: 5.30875, summerEveningPeak: 8.905, summerNormal: 6.85 },
+                above50: { base: 6.60, morningPeak: 8.58, solar: 5.115, eveningPeak: 8.58, normal: 6.60, summerSolar: 5.115, summerEveningPeak: 8.58, summerNormal: 6.60 } }
+      },
+      commercial: {
+        "11": { base: 7.8, morningPeak: 10.14, solar: 6.045, eveningPeak: 10.14, normal: 7.8, summerSolar: 6.045, summerEveningPeak: 10.14, summerNormal: 7.8 },
+        "33": { base: 7.8, morningPeak: 10.14, solar: 6.045, eveningPeak: 10.14, normal: 7.8, summerSolar: 6.045, summerEveningPeak: 10.14, summerNormal: 7.8 }
+      }
+    },
+    oa: {
+      "11": { wheelLoss: 12.25, wheelCharge: 0.22725, stuLoss: 1.03, stuCharge: 0.2495, sldc: 3000, css: 0.56, addSurcharge: 1.05 },
+      "33": { wheelLoss: 12.25, wheelCharge: 0.22725, stuLoss: 1.03, stuCharge: 0.2495, sldc: 3000, css: 0.56, addSurcharge: 1.05 }
+    },
+    ed: { industrial: 0.5, commercial: 0.5 },
+    fuel: 0.4,
+    cpss: 0.075,
+    greenCess: 0.1,
+    todSlots: {
+      oct_mar: [
+        { label: "Normal (2200-0600 & 1700-1800)", key: "normal" },
+        { label: "Morning Peak (0600-0900) (+30%)", key: "morningPeak" },
+        { label: "Solar (0900-1700) (-22.5%)", key: "solar" },
+        { label: "Evening Peak (1800-2200) (+30%)", key: "eveningPeak" }
+      ],
+      apr_sep: [
+        { label: "Solar (0900-1700) (-22.5%)", key: "summerSolar" },
+        { label: "Evening Peak (1800-2300)", key: "summerEveningPeak" },
+        { label: "Normal (2300-0900 & 1700-1800)", key: "summerNormal" }
+      ]
+    }
   },
-  winter_24hr: {
-    upto50: { base: 6.85, tod: 0.0875, ed: 0.495, cpss: 0.51375, fppca: 0.4 },
-    above50: { base: 6.60, tod: 0.084167, ed: 0.495, cpss: 0.495, fppca: 0.4 },
-    label: "Winter — 24 Hr", hours: 24
+  UP: {
+    name: "Uttar Pradesh",
+    voltages: ["11", "33", "132", "220"],
+    tariff: {
+      industrial: {
+        "11": { base: 6.10, normal: 6.10, peak: 7.015, offpeak: 5.185, solar: 6.10, summerNormal: 6.10, summerPeak: 7.015, summerOffpeak: 5.185 },
+        "33": { base: 6.10, normal: 6.10, peak: 7.015, offpeak: 5.185, solar: 6.10, summerNormal: 6.10, summerPeak: 7.015, summerOffpeak: 5.185 },
+        "132": { base: 6.10, normal: 6.10, peak: 7.015, offpeak: 5.185, solar: 6.10, summerNormal: 6.10, summerPeak: 7.015, summerOffpeak: 5.185 },
+        "220": { base: 6.10, normal: 6.10, peak: 7.015, offpeak: 5.185, solar: 6.10, summerNormal: 6.10, summerPeak: 7.015, summerOffpeak: 5.185 }
+      },
+      commercial: {
+        "11": { base: 6.10, normal: 6.10, peak: 7.015, offpeak: 5.185, solar: 6.10, summerNormal: 6.10, summerPeak: 7.015, summerOffpeak: 5.185 },
+        "33": { base: 6.10, normal: 6.10, peak: 7.015, offpeak: 5.185, solar: 6.10, summerNormal: 6.10, summerPeak: 7.015, summerOffpeak: 5.185 },
+        "132": { base: 6.10, normal: 6.10, peak: 7.015, offpeak: 5.185, solar: 6.10, summerNormal: 6.10, summerPeak: 7.015, summerOffpeak: 5.185 },
+        "220": { base: 6.10, normal: 6.10, peak: 7.015, offpeak: 5.185, solar: 6.10, summerNormal: 6.10, summerPeak: 7.015, summerOffpeak: 5.185 }
+      }
+    },
+    oa: {
+      "11": { wheelLoss: 0, wheelCharge: 0, stuLoss: 3.18, stuCharge: 0.3075, sldc: 1500, css: 0.31, addSurcharge: 0 },
+      "33": { wheelLoss: 0, wheelCharge: 0, stuLoss: 3.18, stuCharge: 0.3075, sldc: 1500, css: 0.31, addSurcharge: 0 },
+      "132": { wheelLoss: 0, wheelCharge: 0, stuLoss: 3.18, stuCharge: 0.3075, sldc: 1500, css: 0.31, addSurcharge: 0 },
+      "220": { wheelLoss: 0, wheelCharge: 0, stuLoss: 3.18, stuCharge: 0.3075, sldc: 1500, css: 0.31, addSurcharge: 0 }
+    },
+    ed: { industrial: 0, commercial: 0 },
+    fuel: 0,
+    cpss: 0,
+    greenCess: 0,
+    todSlots: {
+      apr_sep: [
+        { label: "Normal (1000-1900 & 0300-0500)", key: "summerNormal" },
+        { label: "Peak (1900-0300) (+15%)", key: "summerPeak" },
+        { label: "Off-Peak (0500-1000) (-15%)", key: "summerOffpeak" }
+      ],
+      oct_mar: [
+        { label: "Normal (0500-1100 & 1100-1700)", key: "normal" },
+        { label: "Peak (1700-2300) (+15%)", key: "peak" },
+        { label: "Off-Peak (2300-0500) (-15%)", key: "offpeak" }
+      ]
+    }
   },
-  winter_solar: {
-    upto50: { base: 5.31, tod: 0, ed: 0.495, cpss: 0.39825, fppca: 0.4 },
-    above50: { base: 5.12, tod: 0, ed: 0.495, cpss: 0.384, fppca: 0.4 },
-    label: "Winter — Solar (8Hr)", hours: 8
+  MH: {
+    name: "Maharashtra",
+    voltages: ["11", "33", "132", "220"],
+    tariff: {
+      industrial: {
+        "11": { base: 8.44, normal: 8.44, solar_summer: 7.174, solar_winter: 6.33, peak: 10.128, summerNormal: 8.44, summerSolar: 7.174, summerPeak: 10.128 },
+        "33": { base: 8.44, normal: 8.44, solar_summer: 7.174, solar_winter: 6.33, peak: 10.128, summerNormal: 8.44, summerSolar: 7.174, summerPeak: 10.128 },
+        "132": { base: 8.44, normal: 8.44, solar_summer: 7.174, solar_winter: 6.33, peak: 10.128, summerNormal: 8.44, summerSolar: 7.174, summerPeak: 10.128 },
+        "220": { base: 8.44, normal: 8.44, solar_summer: 7.174, solar_winter: 6.33, peak: 10.128, summerNormal: 8.44, summerSolar: 7.174, summerPeak: 10.128 }
+      },
+      commercial: {
+        "11": { base: 13.72, normal: 13.72, solar_summer: 11.662, solar_winter: 10.29, peak: 16.464, summerNormal: 13.72, summerSolar: 11.662, summerPeak: 16.464 },
+        "33": { base: 13.72, normal: 13.72, solar_summer: 11.662, solar_winter: 10.29, peak: 16.464, summerNormal: 13.72, summerSolar: 11.662, summerPeak: 16.464 },
+        "132": { base: 13.72, normal: 13.72, solar_summer: 11.662, solar_winter: 10.29, peak: 16.464, summerNormal: 13.72, summerSolar: 11.662, summerPeak: 16.464 },
+        "220": { base: 13.72, normal: 13.72, solar_summer: 11.662, solar_winter: 10.29, peak: 16.464, summerNormal: 13.72, summerSolar: 11.662, summerPeak: 16.464 }
+      }
+    },
+    oa: {
+      "11": { wheelLoss: 7.5, wheelCharge: 0.81, stuLoss: 0, stuCharge: 0.52, sldc: 0, css: 2.07, addSurcharge: 0 },
+      "33": { wheelLoss: 7.5, wheelCharge: 0.81, stuLoss: 0, stuCharge: 0.52, sldc: 0, css: 2.07, addSurcharge: 0 },
+      "132": { wheelLoss: 0, wheelCharge: 0, stuLoss: 0, stuCharge: 0.52, sldc: 0, css: 2.07, addSurcharge: 0 },
+      "220": { wheelLoss: 0, wheelCharge: 0, stuLoss: 0, stuCharge: 0.52, sldc: 0, css: 2.07, addSurcharge: 0 }
+    },
+    ed: { industrial: 0, commercial: 0 },
+    fuel: 0, cpss: 0, greenCess: 0.25,
+    todSlots: {
+      apr_sep: [
+        { label: "Normal (0000-0600 & 0600-0900)", key: "summerNormal" },
+        { label: "Solar (0900-1700) (-15%)", key: "summerSolar" },
+        { label: "Peak (1700-2400) (+20%)", key: "summerPeak" }
+      ],
+      oct_mar: [
+        { label: "Normal (0000-0600 & 0600-0900)", key: "normal" },
+        { label: "Solar (0900-1700) (-25%)", key: "solar_winter" },
+        { label: "Peak (1700-2400) (+20%)", key: "peak" }
+      ]
+    }
   },
-  winter_evening: {
-    upto50: { base: 8.91, tod: 0, ed: 0.495, cpss: 0.66825, fppca: 0.4 },
-    above50: { base: 8.58, tod: 0, ed: 0.495, cpss: 0.6435, fppca: 0.4 },
-    label: "Winter — Evening Peak (4Hr)", hours: 4
+  GUJ: {
+    name: "Gujarat",
+    voltages: ["11", "33", "132", "220"],
+    tariff: {
+      industrial: {
+        "11": { base: 4.0, peak: 4.45, solar: 3.4, normal: 4.0, summerNormal: 4.0, summerPeak: 4.45, summerSolar: 3.4 },
+        "33": { base: 4.2, peak: 5.05, solar: 3.6, normal: 4.2, summerNormal: 4.2, summerPeak: 5.05, summerSolar: 3.6 },
+        "132": { base: 4.3, peak: 5.15, solar: 3.7, normal: 4.3, summerNormal: 4.3, summerPeak: 5.15, summerSolar: 3.7 },
+        "220": { base: 4.3, peak: 5.15, solar: 3.7, normal: 4.3, summerNormal: 4.3, summerPeak: 5.15, summerSolar: 3.7 }
+      },
+      commercial: {
+        "11": { base: 4.0, peak: 4.45, solar: 3.4, normal: 4.0, summerNormal: 4.0, summerPeak: 4.45, summerSolar: 3.4 },
+        "33": { base: 4.2, peak: 5.05, solar: 3.6, normal: 4.2, summerNormal: 4.2, summerPeak: 5.05, summerSolar: 3.6 },
+        "132": { base: 4.3, peak: 5.15, solar: 3.7, normal: 4.3, summerNormal: 4.3, summerPeak: 5.15, summerSolar: 3.7 },
+        "220": { base: 4.3, peak: 5.15, solar: 3.7, normal: 4.3, summerNormal: 4.3, summerPeak: 5.15, summerSolar: 3.7 }
+      }
+    },
+    oa: {
+      "11": { wheelLoss: 0, wheelCharge: 0, stuLoss: 0, stuCharge: 0, sldc: 0, css: 0, addSurcharge: 0 },
+      "33": { wheelLoss: 0, wheelCharge: 0, stuLoss: 0, stuCharge: 0, sldc: 0, css: 0, addSurcharge: 0 },
+      "132": { wheelLoss: 0, wheelCharge: 0, stuLoss: 0, stuCharge: 0, sldc: 0, css: 0, addSurcharge: 0 },
+      "220": { wheelLoss: 0, wheelCharge: 0, stuLoss: 0, stuCharge: 0, sldc: 0, css: 0, addSurcharge: 0 }
+    },
+    ed: { industrial: 0, commercial: 0 },
+    fuel: 2.30, cpss: 0, greenCess: 0.75,
+    todSlots: {
+      apr_sep: [
+        { label: "Normal", key: "summerNormal" },
+        { label: "Peak (0700-1100 & 1800-2200)", key: "summerPeak" },
+        { label: "Solar (1100-1700) (-60p)", key: "summerSolar" }
+      ],
+      oct_mar: [
+        { label: "Normal", key: "normal" },
+        { label: "Peak (0700-1100 & 1800-2200)", key: "peak" },
+        { label: "Solar (1100-1700) (-60p)", key: "solar" }
+      ]
+    }
   },
-  winter_morning: {
-    upto50: { base: 8.91, tod: 0, ed: 0.495, cpss: 0.66825, fppca: 0.4 },
-    above50: { base: 8.58, tod: 0, ed: 0.495, cpss: 0.6435, fppca: 0.4 },
-    label: "Winter — Morning Peak (3Hr)", hours: 3
+  HR: {
+    name: "Haryana",
+    voltages: ["11", "33", "66", "132", "220"],
+    tariff: {
+      industrial: {
+        "11": { base: 6.95, peak: 6.95, offpeak: 4.25, normal: 6.95, summerNormal: 6.95, summerPeak: 6.95, summerOffpeak: 4.25 },
+        "33": { base: 6.85, peak: 6.85, offpeak: 4.25, normal: 6.85, summerNormal: 6.85, summerPeak: 6.85, summerOffpeak: 4.25 },
+        "66": { base: 6.75, peak: 6.75, offpeak: 3.75, normal: 6.75, summerNormal: 6.75, summerPeak: 6.75, summerOffpeak: 3.75 },
+        "132": { base: 6.75, peak: 6.75, offpeak: 3.75, normal: 6.75, summerNormal: 6.75, summerPeak: 6.75, summerOffpeak: 3.75 },
+        "220": { base: 6.70, peak: 6.70, offpeak: 3.75, normal: 6.70, summerNormal: 6.70, summerPeak: 6.70, summerOffpeak: 3.75 }
+      },
+      commercial: {
+        "11": { base: 6.80, peak: 6.80, offpeak: 4.25, normal: 6.80, summerNormal: 6.80, summerPeak: 6.80, summerOffpeak: 4.25 },
+        "33": { base: 6.70, peak: 6.70, offpeak: 4.25, normal: 6.70, summerNormal: 6.70, summerPeak: 6.70, summerOffpeak: 4.25 },
+        "66": { base: 6.60, peak: 6.60, offpeak: 3.75, normal: 6.60, summerNormal: 6.60, summerPeak: 6.60, summerOffpeak: 3.75 },
+        "132": { base: 6.60, peak: 6.60, offpeak: 3.75, normal: 6.60, summerNormal: 6.60, summerPeak: 6.60, summerOffpeak: 3.75 },
+        "220": { base: 6.50, peak: 6.50, offpeak: 3.75, normal: 6.50, summerNormal: 6.50, summerPeak: 6.50, summerOffpeak: 3.75 }
+      }
+    },
+    oa: {
+      "11": { wheelLoss: 0, wheelCharge: 0.73, stuLoss: 1.97, stuCharge: 0.34, sldc: 1000, css: 1.45, addSurcharge: 1.37 },
+      "33": { wheelLoss: 0, wheelCharge: 0.73, stuLoss: 1.97, stuCharge: 0.34, sldc: 1000, css: 1.45, addSurcharge: 1.37 },
+      "66": { wheelLoss: 0, wheelCharge: 0.45, stuLoss: 1.97, stuCharge: 0.34, sldc: 1000, css: 1.45, addSurcharge: 1.21 },
+      "132": { wheelLoss: 0, wheelCharge: 0.45, stuLoss: 1.97, stuCharge: 0.34, sldc: 1000, css: 1.45, addSurcharge: 1.21 },
+      "220": { wheelLoss: 0, wheelCharge: 0.45, stuLoss: 1.97, stuCharge: 0.34, sldc: 1000, css: 1.45, addSurcharge: 1.21 }
+    },
+    ed: { industrial: 0.10, commercial: 0.10 },
+    fuel: 0, cpss: 0, greenCess: 0.88,
+    todSlots: {
+      apr_sep: [
+        { label: "Normal (0530AM-0530PM)", key: "summerNormal" },
+        { label: "Peak (0530PM-0900PM)", key: "summerPeak" },
+        { label: "Off-Peak (0900PM-0530AM)", key: "summerOffpeak" }
+      ],
+      oct_mar: [
+        { label: "Normal (0530AM-0530PM)", key: "normal" },
+        { label: "Peak (0530PM-0900PM)", key: "peak" },
+        { label: "Off-Peak (0900PM-0530AM)", key: "offpeak" }
+      ]
+    }
+  },
+  RAJ: {
+    name: "Rajasthan",
+    voltages: ["11", "33", "132", "220"],
+    tariff: {
+      industrial: {
+        "11": { base: 6.5, peakAM: 6.825, peakPM: 7.15, offpeak: 6.0, normal: 6.5, summerNormal: 6.5, summerPeakAM: 6.825, summerPeakPM: 7.15, summerOffpeak: 6.0 },
+        "33": { base: 6.5, peakAM: 6.825, peakPM: 7.15, offpeak: 6.0, normal: 6.5, summerNormal: 6.5, summerPeakAM: 6.825, summerPeakPM: 7.15, summerOffpeak: 6.0 },
+        "132": { base: 6.5, peakAM: 6.825, peakPM: 7.15, offpeak: 6.0, normal: 6.5, summerNormal: 6.5, summerPeakAM: 6.825, summerPeakPM: 7.15, summerOffpeak: 6.0 },
+        "220": { base: 6.5, peakAM: 6.825, peakPM: 7.15, offpeak: 6.0, normal: 6.5, summerNormal: 6.5, summerPeakAM: 6.825, summerPeakPM: 7.15, summerOffpeak: 6.0 }
+      },
+      commercial: {
+        "11": { base: 8.5, peakAM: 8.925, peakPM: 9.35, offpeak: 7.65, normal: 8.5, summerNormal: 8.5, summerPeakAM: 8.925, summerPeakPM: 9.35, summerOffpeak: 7.65 },
+        "33": { base: 8.5, peakAM: 8.925, peakPM: 9.35, offpeak: 7.65, normal: 8.5, summerNormal: 8.5, summerPeakAM: 8.925, summerPeakPM: 9.35, summerOffpeak: 7.65 },
+        "132": { base: 8.5, peakAM: 8.925, peakPM: 9.35, offpeak: 7.65, normal: 8.5, summerNormal: 8.5, summerPeakAM: 8.925, summerPeakPM: 9.35, summerOffpeak: 7.65 },
+        "220": { base: 8.5, peakAM: 8.925, peakPM: 9.35, offpeak: 7.65, normal: 8.5, summerNormal: 8.5, summerPeakAM: 8.925, summerPeakPM: 9.35, summerOffpeak: 7.65 }
+      }
+    },
+    oa: {
+      "11": { wheelLoss: 8.8, wheelCharge: 0.69, stuLoss: 4.05, stuCharge: 5.19, sldc: 0, css: 1.48, addSurcharge: 0.5 },
+      "33": { wheelLoss: 3.8, wheelCharge: 0.09, stuLoss: 4.05, stuCharge: 5.19, sldc: 0, css: 1.48, addSurcharge: 0.5 },
+      "132": { wheelLoss: 0, wheelCharge: 0.01, stuLoss: 4.05, stuCharge: 0.3281, sldc: 0, css: 1.48, addSurcharge: 0.5 },
+      "220": { wheelLoss: 0, wheelCharge: 0.01, stuLoss: 4.05, stuCharge: 0.3281, sldc: 0, css: 1.48, addSurcharge: 0.5 }
+    },
+    ed: { industrial: 0.40, commercial: 0.40 },
+    fuel: 0, cpss: 0, greenCess: 0.05,
+    todSlots: {
+      apr_sep: [
+        { label: "Normal", key: "summerNormal" },
+        { label: "Peak AM (0600-0800) (+5%)", key: "summerPeakAM" },
+        { label: "Peak PM (1800-2200) (+10%)", key: "summerPeakPM" },
+        { label: "Off-Peak (1200-1600) (-10%)", key: "summerOffpeak" }
+      ],
+      oct_mar: [
+        { label: "Normal", key: "normal" },
+        { label: "Peak AM (0600-0800) (+5%)", key: "peakAM" },
+        { label: "Peak PM (1800-2200) (+10%)", key: "peakPM" },
+        { label: "Off-Peak (1200-1600) (-10%)", key: "offpeak" }
+      ]
+    }
+  },
+  TG: {
+    name: "Telangana",
+    voltages: ["11", "33", "132"],
+    tariff: {
+      industrial: {
+        "11": { base: 7.65, peak: 9.15, offpeak: 7.15, normal: 7.65, summerNormal: 7.65, summerPeak: 9.15, summerOffpeak: 7.15 },
+        "33": { base: 7.15, peak: 8.65, offpeak: 6.65, normal: 7.15, summerNormal: 7.15, summerPeak: 8.65, summerOffpeak: 6.65 },
+        "132": { base: 6.65, peak: 8.15, offpeak: 6.15, normal: 6.65, summerNormal: 6.65, summerPeak: 8.15, summerOffpeak: 6.15 }
+      },
+      commercial: {
+        "11": { base: 8.8, peak: 10.3, offpeak: 8.3, normal: 8.8, summerNormal: 8.8, summerPeak: 10.3, summerOffpeak: 8.3 },
+        "33": { base: 8.0, peak: 9.5, offpeak: 7.5, normal: 8.0, summerNormal: 8.0, summerPeak: 9.5, summerOffpeak: 7.5 },
+        "132": { base: 7.8, peak: 9.3, offpeak: 7.3, normal: 7.8, summerNormal: 7.8, summerPeak: 9.3, summerOffpeak: 7.3 }
+      }
+    },
+    oa: {
+      "11": { wheelLoss: 4.01, wheelCharge: 0.2876, stuLoss: 2.26, stuCharge: 0.12, sldc: 3349, css: 1.98, addSurcharge: 0.13 },
+      "33": { wheelLoss: 3.14, wheelCharge: 0.0885, stuLoss: 2.26, stuCharge: 0.12, sldc: 3349, css: 1.73, addSurcharge: 0.13 },
+      "132": { wheelLoss: 0, wheelCharge: 0, stuLoss: 2.26, stuCharge: 0.12, sldc: 3349, css: 1.62, addSurcharge: 0.13 }
+    },
+    ed: { industrial: 0.06, commercial: 0.06 },
+    fuel: 0, cpss: 0, greenCess: 0.66,
+    todSlots: {
+      apr_sep: [
+        { label: "Normal (1000PM-0600AM)", key: "summerNormal" },
+        { label: "Peak (0600-1000 & 1800-2200) (+1.50)", key: "summerPeak" },
+        { label: "Off-Peak (2200-0600) (-0.50)", key: "summerOffpeak" }
+      ],
+      oct_mar: [
+        { label: "Normal (1000PM-0600AM)", key: "normal" },
+        { label: "Peak (0600-1000 & 1800-2200) (+1.50)", key: "peak" },
+        { label: "Off-Peak (2200-0600) (-0.50)", key: "offpeak" }
+      ]
+    }
+  },
+  AP: {
+    name: "Andhra Pradesh",
+    voltages: ["11", "33", "132", "220"],
+    tariff: {
+      industrial: {
+        "11": { base: 7.0, normal: 7.0, peak: 7.0, offpeak: 7.0, summerNormal: 7.0, summerPeak: 7.0, summerOffpeak: 7.0 },
+        "33": { base: 6.5, normal: 6.5, peak: 6.5, offpeak: 6.5, summerNormal: 6.5, summerPeak: 6.5, summerOffpeak: 6.5 },
+        "132": { base: 6.0, normal: 6.0, peak: 6.0, offpeak: 6.0, summerNormal: 6.0, summerPeak: 6.0, summerOffpeak: 6.0 },
+        "220": { base: 5.75, normal: 5.75, peak: 5.75, offpeak: 5.75, summerNormal: 5.75, summerPeak: 5.75, summerOffpeak: 5.75 }
+      },
+      commercial: {
+        "11": { base: 8.5, normal: 8.5, peak: 8.5, offpeak: 8.5, summerNormal: 8.5, summerPeak: 8.5, summerOffpeak: 8.5 },
+        "33": { base: 8.0, normal: 8.0, peak: 8.0, offpeak: 8.0, summerNormal: 8.0, summerPeak: 8.0, summerOffpeak: 8.0 },
+        "132": { base: 7.5, normal: 7.5, peak: 7.5, offpeak: 7.5, summerNormal: 7.5, summerPeak: 7.5, summerOffpeak: 7.5 },
+        "220": { base: 7.0, normal: 7.0, peak: 7.0, offpeak: 7.0, summerNormal: 7.0, summerPeak: 7.0, summerOffpeak: 7.0 }
+      }
+    },
+    oa: {
+      "11": { wheelLoss: 3.37, wheelCharge: 1.0, stuLoss: 2.59, stuCharge: 0.26979, sldc: 0, css: 1.71, addSurcharge: 0 },
+      "33": { wheelLoss: 2.72, wheelCharge: 0.47, stuLoss: 2.59, stuCharge: 0.26979, sldc: 0, css: 1.48, addSurcharge: 0 },
+      "132": { wheelLoss: 0, wheelCharge: 0, stuLoss: 2.59, stuCharge: 0.26979, sldc: 0, css: 1.44, addSurcharge: 0 },
+      "220": { wheelLoss: 0, wheelCharge: 0, stuLoss: 2.59, stuCharge: 0.26979, sldc: 0, css: 1.37, addSurcharge: 0 }
+    },
+    ed: { industrial: 0.06, commercial: 0.06 },
+    fuel: 0, cpss: 0, greenCess: 0,
+    todSlots: {
+      apr_sep: [{ label: "Normal", key: "summerNormal" }, { label: "Peak", key: "summerPeak" }, { label: "Off-Peak", key: "summerOffpeak" }],
+      oct_mar: [{ label: "Normal", key: "normal" }, { label: "Peak", key: "peak" }, { label: "Off-Peak", key: "offpeak" }]
+    }
+  },
+  TN: {
+    name: "Tamil Nadu",
+    voltages: ["11", "33", "110", "220"],
+    tariff: {
+      industrial: {
+        "11": { base: 7.5, peak: 9.375, offpeak: 7.125, normal: 7.5, summerNormal: 7.5, summerPeak: 9.375, summerOffpeak: 7.125 },
+        "33": { base: 7.5, peak: 9.375, offpeak: 7.125, normal: 7.5, summerNormal: 7.5, summerPeak: 9.375, summerOffpeak: 7.125 },
+        "110": { base: 7.5, peak: 9.375, offpeak: 7.125, normal: 7.5, summerNormal: 7.5, summerPeak: 9.375, summerOffpeak: 7.125 },
+        "220": { base: 7.5, peak: 9.375, offpeak: 7.125, normal: 7.5, summerNormal: 7.5, summerPeak: 9.375, summerOffpeak: 7.125 }
+      },
+      commercial: {
+        "11": { base: 9.4, peak: 11.75, offpeak: 8.93, normal: 9.4, summerNormal: 9.4, summerPeak: 11.75, summerOffpeak: 8.93 },
+        "33": { base: 9.4, peak: 11.75, offpeak: 8.93, normal: 9.4, summerNormal: 9.4, summerPeak: 11.75, summerOffpeak: 8.93 },
+        "110": { base: 9.4, peak: 11.75, offpeak: 8.93, normal: 9.4, summerNormal: 9.4, summerPeak: 11.75, summerOffpeak: 8.93 },
+        "220": { base: 9.4, peak: 11.75, offpeak: 8.93, normal: 9.4, summerNormal: 9.4, summerPeak: 11.75, summerOffpeak: 8.93 }
+      }
+    },
+    oa: {
+      "11": { wheelLoss: 0, wheelCharge: 1.04, stuLoss: 4.29, stuCharge: 0.24181, sldc: 209, css: 1.99, addSurcharge: 0.1 },
+      "33": { wheelLoss: 0, wheelCharge: 1.04, stuLoss: 3.06, stuCharge: 0.24181, sldc: 209, css: 1.99, addSurcharge: 0.1 },
+      "110": { wheelLoss: 0, wheelCharge: 0, stuLoss: 2.34, stuCharge: 0.24181, sldc: 209, css: 1.99, addSurcharge: 0.1 },
+      "220": { wheelLoss: 0, wheelCharge: 0, stuLoss: 0.77, stuCharge: 0.24181, sldc: 209, css: 1.99, addSurcharge: 0.1 }
+    },
+    ed: { industrial: 0, commercial: 0 },
+    fuel: 0, cpss: 0, greenCess: 0,
+    todSlots: {
+      apr_sep: [{ label: "Normal (0500-0600 & 1000-1800)", key: "summerNormal" }, { label: "Peak (0600-1000 & 1800-2200) (+25%)", key: "summerPeak" }, { label: "Night (2200-0500) (-5%)", key: "summerOffpeak" }],
+      oct_mar: [{ label: "Normal (0500-0600 & 1000-1800)", key: "normal" }, { label: "Peak (0600-1000 & 1800-2200) (+25%)", key: "peak" }, { label: "Night (2200-0500) (-5%)", key: "offpeak" }]
+    }
+  },
+  MP: {
+    name: "Madhya Pradesh",
+    voltages: ["11", "33", "132", "220"],
+    tariff: {
+      industrial: {
+        "11": { base: 6.55, peak: 6.55, offpeak: 6.55, solar: 6.55, normal: 6.55, summerNormal: 6.55, summerPeak: 6.55, summerSolar: 6.55 },
+        "33": { base: 6.55, peak: 6.55, offpeak: 6.55, solar: 6.55, normal: 6.55, summerNormal: 6.55, summerPeak: 6.55, summerSolar: 6.55 },
+        "132": { base: 6.55, peak: 6.55, offpeak: 6.55, solar: 6.55, normal: 6.55, summerNormal: 6.55, summerPeak: 6.55, summerSolar: 6.55 },
+        "220": { base: 6.55, peak: 6.55, offpeak: 6.55, solar: 6.55, normal: 6.55, summerNormal: 6.55, summerPeak: 6.55, summerSolar: 6.55 }
+      },
+      commercial: {
+        "11": { base: 7.5, peak: 7.5, offpeak: 7.5, solar: 7.5, normal: 7.5, summerNormal: 7.5, summerPeak: 7.5, summerSolar: 7.5 },
+        "33": { base: 7.5, peak: 7.5, offpeak: 7.5, solar: 7.5, normal: 7.5, summerNormal: 7.5, summerPeak: 7.5, summerSolar: 7.5 },
+        "132": { base: 7.5, peak: 7.5, offpeak: 7.5, solar: 7.5, normal: 7.5, summerNormal: 7.5, summerPeak: 7.5, summerSolar: 7.5 },
+        "220": { base: 7.5, peak: 7.5, offpeak: 7.5, solar: 7.5, normal: 7.5, summerNormal: 7.5, summerPeak: 7.5, summerSolar: 7.5 }
+      }
+    },
+    oa: {
+      "11": { wheelLoss: 4.47, wheelCharge: 0.69, stuLoss: 2.48, stuCharge: 0.41, sldc: 0, css: 1.49, addSurcharge: 1.18 },
+      "33": { wheelLoss: 3.57, wheelCharge: 0.17, stuLoss: 2.48, stuCharge: 0.41, sldc: 0, css: 1.49, addSurcharge: 1.18 },
+      "132": { wheelLoss: 0, wheelCharge: 0, stuLoss: 2.48, stuCharge: 0.41, sldc: 0, css: 1.49, addSurcharge: 1.18 },
+      "220": { wheelLoss: 0, wheelCharge: 0, stuLoss: 2.48, stuCharge: 0.41, sldc: 0, css: 1.49, addSurcharge: 1.18 }
+    },
+    ed: { industrial: 0, commercial: 0 },
+    fuel: 0, cpss: 0, greenCess: 0,
+    todSlots: {
+      apr_sep: [{ label: "Normal", key: "summerNormal" }, { label: "Peak (0600-0900 & 1700-2200)", key: "summerPeak" }, { label: "Solar/Off-Peak (0900-1700)", key: "summerSolar" }],
+      oct_mar: [{ label: "Normal", key: "normal" }, { label: "Peak (0600-0900 & 1700-2200)", key: "peak" }, { label: "Off-Peak (2200-0600)", key: "offpeak" }]
+    }
+  },
+  PUB: {
+    name: "Punjab",
+    voltages: ["11", "33", "66", "132", "220"],
+    tariff: {
+      industrial: {
+        "11": { base: 6.99, normal: 6.99, peak: 6.99, offpeak: 6.99, summerNormal: 6.99, summerPeak: 6.99, summerOffpeak: 6.99 },
+        "33": { base: 6.99, normal: 6.99, peak: 6.99, offpeak: 6.99, summerNormal: 6.99, summerPeak: 6.99, summerOffpeak: 6.99 },
+        "66": { base: 6.99, normal: 6.99, peak: 6.99, offpeak: 6.99, summerNormal: 6.99, summerPeak: 6.99, summerOffpeak: 6.99 },
+        "132": { base: 6.99, normal: 6.99, peak: 6.99, offpeak: 6.99, summerNormal: 6.99, summerPeak: 6.99, summerOffpeak: 6.99 },
+        "220": { base: 6.99, normal: 6.99, peak: 6.99, offpeak: 6.99, summerNormal: 6.99, summerPeak: 6.99, summerOffpeak: 6.99 }
+      },
+      commercial: {
+        "11": { base: 7.5, normal: 7.5, peak: 7.5, offpeak: 7.5, summerNormal: 7.5, summerPeak: 7.5, summerOffpeak: 7.5 },
+        "33": { base: 7.5, normal: 7.5, peak: 7.5, offpeak: 7.5, summerNormal: 7.5, summerPeak: 7.5, summerOffpeak: 7.5 },
+        "66": { base: 7.5, normal: 7.5, peak: 7.5, offpeak: 7.5, summerNormal: 7.5, summerPeak: 7.5, summerOffpeak: 7.5 },
+        "132": { base: 7.5, normal: 7.5, peak: 7.5, offpeak: 7.5, summerNormal: 7.5, summerPeak: 7.5, summerOffpeak: 7.5 },
+        "220": { base: 7.5, normal: 7.5, peak: 7.5, offpeak: 7.5, summerNormal: 7.5, summerPeak: 7.5, summerOffpeak: 7.5 }
+      }
+    },
+    oa: {
+      "11": { wheelLoss: 4, wheelCharge: 0.61972, stuLoss: 2.19, stuCharge: 0.20584, sldc: 2000, css: 0.86, addSurcharge: 1.22 },
+      "33": { wheelLoss: 1.5, wheelCharge: 0.61972, stuLoss: 2.19, stuCharge: 0.20584, sldc: 2000, css: 0.86, addSurcharge: 1.47 },
+      "66": { wheelLoss: 1.5, wheelCharge: 0.61972, stuLoss: 2.19, stuCharge: 0.20584, sldc: 2000, css: 0.86, addSurcharge: 1.09 },
+      "132": { wheelLoss: 0, wheelCharge: 0, stuLoss: 2.19, stuCharge: 0.20584, sldc: 2000, css: 0.86, addSurcharge: 1.09 },
+      "220": { wheelLoss: 0, wheelCharge: 0, stuLoss: 2.19, stuCharge: 0.20584, sldc: 2000, css: 0.86, addSurcharge: 1.09 }
+    },
+    ed: { industrial: 1.09, commercial: 1.09 },
+    fuel: 0, cpss: 0, greenCess: 0,
+    todSlots: {
+      apr_sep: [{ label: "Normal (0600AM-0600PM)", key: "summerNormal" }, { label: "Peak (0600PM-1000PM)", key: "summerPeak" }, { label: "Off-Peak (1000PM-0600AM)", key: "summerOffpeak" }],
+      oct_mar: [{ label: "Normal (0600AM-0600PM)", key: "normal" }, { label: "Peak (0600PM-1000PM)", key: "peak" }, { label: "Off-Peak (1000PM-0600AM)", key: "offpeak" }]
+    }
+  },
+  CG: {
+    name: "Chhattisgarh",
+    voltages: ["11", "33", "132", "220"],
+    tariff: {
+      industrial: {
+        "11": { base: 5.8, normal: 5.8, peak: 5.8, offpeak: 5.8, summerNormal: 5.8, summerPeak: 5.8, summerOffpeak: 5.8 },
+        "33": { base: 5.8, normal: 5.8, peak: 5.8, offpeak: 5.8, summerNormal: 5.8, summerPeak: 5.8, summerOffpeak: 5.8 },
+        "132": { base: 5.8, normal: 5.8, peak: 5.8, offpeak: 5.8, summerNormal: 5.8, summerPeak: 5.8, summerOffpeak: 5.8 },
+        "220": { base: 5.8, normal: 5.8, peak: 5.8, offpeak: 5.8, summerNormal: 5.8, summerPeak: 5.8, summerOffpeak: 5.8 }
+      },
+      commercial: {
+        "11": { base: 7.0, normal: 7.0, peak: 7.0, offpeak: 7.0, summerNormal: 7.0, summerPeak: 7.0, summerOffpeak: 7.0 },
+        "33": { base: 7.0, normal: 7.0, peak: 7.0, offpeak: 7.0, summerNormal: 7.0, summerPeak: 7.0, summerOffpeak: 7.0 },
+        "132": { base: 7.0, normal: 7.0, peak: 7.0, offpeak: 7.0, summerNormal: 7.0, summerPeak: 7.0, summerOffpeak: 7.0 },
+        "220": { base: 7.0, normal: 7.0, peak: 7.0, offpeak: 7.0, summerNormal: 7.0, summerPeak: 7.0, summerOffpeak: 7.0 }
+      }
+    },
+    oa: {
+      "11": { wheelLoss: 10, wheelCharge: 0.8513, stuLoss: 3, stuCharge: 0.3445, sldc: 2000, css: 1.4, addSurcharge: 0 },
+      "33": { wheelLoss: 6, wheelCharge: 0.2979, stuLoss: 3, stuCharge: 0.3445, sldc: 2000, css: 1.4, addSurcharge: 0 },
+      "132": { wheelLoss: 0, wheelCharge: 0, stuLoss: 3, stuCharge: 0.3445, sldc: 2000, css: 0.94, addSurcharge: 0 },
+      "220": { wheelLoss: 0, wheelCharge: 0, stuLoss: 3, stuCharge: 0.3445, sldc: 2000, css: 1.33, addSurcharge: 0 }
+    },
+    ed: { industrial: 0, commercial: 0 },
+    fuel: 0, cpss: 0, greenCess: 0,
+    todSlots: {
+      apr_sep: [{ label: "Normal", key: "summerNormal" }],
+      oct_mar: [{ label: "Normal", key: "normal" }]
+    }
+  },
+  DL: {
+    name: "Delhi",
+    voltages: ["11", "33", "220"],
+    tariff: {
+      industrial: {
+        "11": { base: 8.0, normal: 8.0, peak: 8.0, offpeak: 8.0, summerNormal: 8.0, summerPeak: 8.0, summerOffpeak: 8.0 },
+        "33": { base: 8.0, normal: 8.0, peak: 8.0, offpeak: 8.0, summerNormal: 8.0, summerPeak: 8.0, summerOffpeak: 8.0 },
+        "220": { base: 8.0, normal: 8.0, peak: 8.0, offpeak: 8.0, summerNormal: 8.0, summerPeak: 8.0, summerOffpeak: 8.0 }
+      },
+      commercial: {
+        "11": { base: 9.0, normal: 9.0, peak: 9.0, offpeak: 9.0, summerNormal: 9.0, summerPeak: 9.0, summerOffpeak: 9.0 },
+        "33": { base: 9.0, normal: 9.0, peak: 9.0, offpeak: 9.0, summerNormal: 9.0, summerPeak: 9.0, summerOffpeak: 9.0 },
+        "220": { base: 9.0, normal: 9.0, peak: 9.0, offpeak: 9.0, summerNormal: 9.0, summerPeak: 9.0, summerOffpeak: 9.0 }
+      }
+    },
+    oa: {
+      "11": { wheelLoss: 2.21, wheelCharge: 1.061, stuLoss: 0.78, stuCharge: 0.3824, sldc: 1000, css: 1.9, addSurcharge: 1.898 },
+      "33": { wheelLoss: 1.01, wheelCharge: 1.048, stuLoss: 0.78, stuCharge: 0.3824, sldc: 1000, css: 1.9, addSurcharge: 1.898 },
+      "220": { wheelLoss: 0, wheelCharge: 0.991, stuLoss: 0.78, stuCharge: 0.3824, sldc: 1000, css: 1.9, addSurcharge: 1.898 }
+    },
+    ed: { industrial: 0, commercial: 0 },
+    fuel: 0.1484, cpss: 0, greenCess: 0,
+    todSlots: {
+      apr_sep: [{ label: "Normal", key: "summerNormal" }],
+      oct_mar: [{ label: "Normal", key: "normal" }]
+    }
+  },
+  BIHAR: {
+    name: "Bihar",
+    voltages: ["11", "33", "132"],
+    tariff: {
+      industrial: {
+        "11": { base: 6.5, normal: 6.5, peak: 6.5, offpeak: 6.5, summerNormal: 6.5, summerPeak: 6.5, summerOffpeak: 6.5 },
+        "33": { base: 6.5, normal: 6.5, peak: 6.5, offpeak: 6.5, summerNormal: 6.5, summerPeak: 6.5, summerOffpeak: 6.5 },
+        "132": { base: 6.5, normal: 6.5, peak: 6.5, offpeak: 6.5, summerNormal: 6.5, summerPeak: 6.5, summerOffpeak: 6.5 }
+      },
+      commercial: {
+        "11": { base: 7.5, normal: 7.5, peak: 7.5, offpeak: 7.5, summerNormal: 7.5, summerPeak: 7.5, summerOffpeak: 7.5 },
+        "33": { base: 7.5, normal: 7.5, peak: 7.5, offpeak: 7.5, summerNormal: 7.5, summerPeak: 7.5, summerOffpeak: 7.5 },
+        "132": { base: 7.5, normal: 7.5, peak: 7.5, offpeak: 7.5, summerNormal: 7.5, summerPeak: 7.5, summerOffpeak: 7.5 }
+      }
+    },
+    oa: {
+      "11": { wheelLoss: 4.71, wheelCharge: 0.53, stuLoss: 2.56, stuCharge: 0.23458, sldc: 1000, css: 1.77, addSurcharge: 0 },
+      "33": { wheelLoss: 3.27, wheelCharge: 0.52, stuLoss: 2.56, stuCharge: 0.21326, sldc: 1000, css: 1.77, addSurcharge: 0 },
+      "132": { wheelLoss: 0, wheelCharge: 0, stuLoss: 2.56, stuCharge: 0.21326, sldc: 1000, css: 0, addSurcharge: 0 }
+    },
+    ed: { industrial: 0, commercial: 0 },
+    fuel: 0, cpss: 0, greenCess: 0,
+    todSlots: {
+      apr_sep: [{ label: "Normal (0900AM-0500PM)", key: "summerNormal" }, { label: "Peak (0500PM-1100PM)", key: "summerPeak" }, { label: "Off-Peak (1100PM-0900AM)", key: "summerOffpeak" }],
+      oct_mar: [{ label: "Normal", key: "normal" }, { label: "Peak", key: "peak" }, { label: "Off-Peak", key: "offpeak" }]
+    }
+  },
+  KRN: {
+    name: "Karnataka",
+    voltages: ["11", "33", "66", "110", "220"],
+    tariff: {
+      industrial: {
+        "11": { base: 6.6, normal: 6.6, peak: 6.6, offpeak: 6.6, summerNormal: 6.6, summerPeak: 6.6, summerOffpeak: 6.6 },
+        "33": { base: 6.6, normal: 6.6, peak: 6.6, offpeak: 6.6, summerNormal: 6.6, summerPeak: 6.6, summerOffpeak: 6.6 },
+        "66": { base: 6.6, normal: 6.6, peak: 6.6, offpeak: 6.6, summerNormal: 6.6, summerPeak: 6.6, summerOffpeak: 6.6 },
+        "110": { base: 6.6, normal: 6.6, peak: 6.6, offpeak: 6.6, summerNormal: 6.6, summerPeak: 6.6, summerOffpeak: 6.6 },
+        "220": { base: 6.6, normal: 6.6, peak: 6.6, offpeak: 6.6, summerNormal: 6.6, summerPeak: 6.6, summerOffpeak: 6.6 }
+      },
+      commercial: {
+        "11": { base: 7.7, normal: 7.7, peak: 7.7, offpeak: 7.7, summerNormal: 7.7, summerPeak: 7.7, summerOffpeak: 7.7 },
+        "33": { base: 7.7, normal: 7.7, peak: 7.7, offpeak: 7.7, summerNormal: 7.7, summerPeak: 7.7, summerOffpeak: 7.7 },
+        "66": { base: 7.7, normal: 7.7, peak: 7.7, offpeak: 7.7, summerNormal: 7.7, summerPeak: 7.7, summerOffpeak: 7.7 },
+        "110": { base: 7.7, normal: 7.7, peak: 7.7, offpeak: 7.7, summerNormal: 7.7, summerPeak: 7.7, summerOffpeak: 7.7 },
+        "220": { base: 7.7, normal: 7.7, peak: 7.7, offpeak: 7.7, summerNormal: 7.7, summerPeak: 7.7, summerOffpeak: 7.7 }
+      }
+    },
+    oa: {
+      "11": { wheelLoss: 0, wheelCharge: 0, stuLoss: 0, stuCharge: 0, sldc: 0, css: 0, addSurcharge: 0 },
+      "33": { wheelLoss: 0, wheelCharge: 0, stuLoss: 0, stuCharge: 0, sldc: 0, css: 0, addSurcharge: 0 },
+      "66": { wheelLoss: 0, wheelCharge: 0, stuLoss: 0, stuCharge: 0, sldc: 0, css: 0, addSurcharge: 0 },
+      "110": { wheelLoss: 0, wheelCharge: 0, stuLoss: 0, stuCharge: 0, sldc: 0, css: 0, addSurcharge: 0 },
+      "220": { wheelLoss: 0, wheelCharge: 0, stuLoss: 0, stuCharge: 0, sldc: 0, css: 0, addSurcharge: 0 }
+    },
+    ed: { industrial: 0, commercial: 0 },
+    fuel: 0, cpss: 0, greenCess: 0,
+    todSlots: {
+      apr_sep: [{ label: "Normal", key: "summerNormal" }],
+      oct_mar: [{ label: "Normal", key: "normal" }]
+    }
   }
 };
 
-const OA_CHARGES = {
-  ists_loss_pct: 4.43, stu_loss_pct: 1.03, wheeling_loss_pct: 12.25,
-  ists_charge: 511.88, stu_charge: 249.526, wheeling_charge: 227.25,
-  nldc_app_fee: 5000, nldc_sch_charge: 1, sldc_charge: 1000,
-  national_bidders: 700, css: 0.56, add_surcharge: 0,
-  green_cess: 0.1, ed: 0.5, trading_margin: 25
-};
-
-const EXCHANGE_DATA = {
-  IEX: { txFee: 23.6, name: "Indian Energy Exchange", premiumPct: 0 },
-  PXIL: { txFee: 24.0, name: "Power Exchange India Ltd", premiumPct: 0.5 },
-  HPX: { txFee: 22.0, name: "Hindustan Power Exchange", premiumPct: -0.3 }
-};
-
-const CONTRACT_MULT = { DAM: 1.0, TAM: 0.97, RTM: 1.05, GDAM: 1.15, GTAM: 1.12 };
-
-let selectedExchange = 'IEX';
-let charts = {};
-
-function switchTab(id) {
-  document.querySelectorAll('.tab').forEach((t,i) => {
-    const ids = ['overview','discom','exchange','comparison'];
-    t.classList.toggle('active', ids[i] === id);
-  });
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  document.getElementById('tab-' + id).classList.add('active');
-  recalc();
-}
-
-function selectExchange(ex) {
-  selectedExchange = ex;
-  document.querySelectorAll('.exchange-card').forEach(c => c.classList.remove('selected'));
-  document.getElementById('ex-' + ex).classList.add('selected');
-  const data = EXCHANGE_DATA[ex];
-  document.getElementById('ex-txfee').value = data.txFee;
-  recalc();
-}
-
-function getDiscomLanded(season, lf) {
-  const d = DISCOM[season][lf];
-  return d.base + d.tod + d.ed + d.cpss + d.fppca;
-}
-
-function calcExchange() {
-  const mw = parseFloat(document.getElementById('ex-mw').value) || 1.25;
-  const hrs = parseFloat(document.getElementById('ex-hrs').value) || 8;
-  const days = parseFloat(document.getElementById('ex-days').value) || 30;
-  const price = parseFloat(document.getElementById('ex-price').value) || 3379;
-  const txFee = parseFloat(document.getElementById('ex-txfee').value) || 23.6;
-  const contract = document.getElementById('ex-contract').value;
-
-  const mult = CONTRACT_MULT[contract];
-  const exData = EXCHANGE_DATA[selectedExchange];
-  const adjPrice = price * mult * (1 + exData.premiumPct / 100);
-
-  const bidVol = mw * hrs * days; // MWH
-  const istsLoss = 1 - OA_CHARGES.ists_loss_pct / 100;
-  const stuLoss = 1 - OA_CHARGES.stu_loss_pct / 100;
-  const wheelLoss = 1 - OA_CHARGES.wheeling_loss_pct / 100;
-
-  const drawlISTS = bidVol * istsLoss;
-  const drawlSTU = drawlISTS * stuLoss;
-  const drawlFinal = drawlSTU * wheelLoss;
-
-  const energyCost = bidVol * adjPrice;
-  const istsCharge = bidVol * OA_CHARGES.ists_charge;
-  const stuCharge = bidVol * OA_CHARGES.stu_charge;
-  const wheelCharge = bidVol * OA_CHARGES.wheeling_charge;
-  const nldcApp = (OA_CHARGES.nldc_app_fee / OA_CHARGES.national_bidders) * days;
-  const nldcSch = Math.min(OA_CHARGES.nldc_sch_charge * bidVol, 200 * days);
-  const sldcCharge = OA_CHARGES.sldc_charge * days;
-  const txFeeTotal = bidVol * txFee;
-  const tradingMargin = bidVol * OA_CHARGES.trading_margin;
-
-  const statCharges = istsCharge + stuCharge + wheelCharge + nldcApp + nldcSch + sldcCharge + txFeeTotal;
-  const totalPayable = energyCost + statCharges + tradingMargin;
-
-  const costPerUnit = totalPayable / (drawlFinal * 1000); // Rs/kWh
-  const lossImpact = (adjPrice / 1000) * (1 / (istsLoss * stuLoss * wheelLoss) - 1);
-
-  const landed = costPerUnit + OA_CHARGES.css + OA_CHARGES.add_surcharge + OA_CHARGES.green_cess + OA_CHARGES.ed;
-
-  return {
-    bidVol, drawlFinal, adjPrice,
-    energyCost, istsCharge, stuCharge, wheelCharge,
-    nldcApp, nldcSch, sldcCharge, txFeeTotal, tradingMargin,
-    statCharges, totalPayable, costPerUnit, lossImpact, landed,
-    css: OA_CHARGES.css, addSurcharge: OA_CHARGES.add_surcharge,
-    greenCess: OA_CHARGES.green_cess, elecDuty: OA_CHARGES.ed,
-    perUnit: {
-      energy: adjPrice / 1000,
-      ists: istsCharge / (drawlFinal * 1000),
-      stu: stuCharge / (drawlFinal * 1000),
-      wheeling: wheelCharge / (drawlFinal * 1000),
-      nldc: (nldcApp + nldcSch) / (drawlFinal * 1000),
-      sldc: sldcCharge / (drawlFinal * 1000),
-      txFee: txFeeTotal / (drawlFinal * 1000),
-      trading: tradingMargin / (drawlFinal * 1000),
-      loss: lossImpact
-    }
+// Add missing states as stubs
+['Orissa','WB','HP','Jharkhand','GOA','Assam'].forEach(k => {
+  if (!DB[k]) DB[k] = {
+    name: k, voltages: ["11","33","132"],
+    tariff: { industrial: { "11":{base:6,normal:6,summerNormal:6},"33":{base:6,normal:6,summerNormal:6},"132":{base:6,normal:6,summerNormal:6} },
+              commercial: { "11":{base:7,normal:7,summerNormal:7},"33":{base:7,normal:7,summerNormal:7},"132":{base:7,normal:7,summerNormal:7} } },
+    oa: { "11":{wheelLoss:0,wheelCharge:0,stuLoss:0,stuCharge:0,sldc:0,css:0,addSurcharge:0},
+          "33":{wheelLoss:0,wheelCharge:0,stuLoss:0,stuCharge:0,sldc:0,css:0,addSurcharge:0},
+          "132":{wheelLoss:0,wheelCharge:0,stuLoss:0,stuCharge:0,sldc:0,css:0,addSurcharge:0} },
+    ed:{industrial:0,commercial:0}, fuel:0, cpss:0, greenCess:0,
+    todSlots: { apr_sep:[{label:"Normal",key:"summerNormal"}], oct_mar:[{label:"Normal",key:"normal"}] }
   };
+});
+
+// ==================== LOGIC ====================
+let pieChart = null;
+
+function onStateChange() {
+  const st = DB[document.getElementById('f-state').value];
+  const vSel = document.getElementById('f-voltage');
+  vSel.innerHTML = st.voltages.map(v => `<option value="${v}">${v} kV</option>`).join('');
+  populateTOD();
+  autoFillOA();
+  recalc();
 }
+
+function populateTOD() {
+  const st = DB[document.getElementById('f-state').value];
+  const month = document.getElementById('f-month').value;
+  const todSel = document.getElementById('f-tod');
+  const slots = st.todSlots[month] || [{label:"Normal",key:"normal"}];
+  todSel.innerHTML = slots.map(s => `<option value="${s.key}">${s.label}</option>`).join('');
+}
+
+function autoFillOA() {
+  const st = DB[document.getElementById('f-state').value];
+  const v = document.getElementById('f-voltage').value;
+  const oa = st.oa[v] || st.oa[st.voltages[0]];
+  document.getElementById('a-stu').value = oa.stuCharge;
+  document.getElementById('a-stu-loss').value = oa.stuLoss;
+  document.getElementById('a-wheel').value = oa.wheelCharge;
+  document.getElementById('a-wheel-loss').value = oa.wheelLoss;
+  document.getElementById('a-css').value = oa.css;
+  document.getElementById('a-addsur').value = oa.addSurcharge;
+}
+
+document.getElementById('f-voltage').addEventListener('change', () => { autoFillOA(); recalc(); });
+document.getElementById('f-month').addEventListener('change', () => { populateTOD(); recalc(); });
 
 function recalc() {
-  const season = document.getElementById('d-season').value;
-  const lf = document.getElementById('d-lf').value;
-  const ex = calcExchange();
-  const discomLanded = getDiscomLanded(season, lf);
-  const saving = discomLanded - ex.landed;
-  const monthlyVol = ex.drawlFinal * 1000;
+  const stKey = document.getElementById('f-state').value;
+  const st = DB[stKey];
+  const cat = document.getElementById('f-category').value;
+  const v = document.getElementById('f-voltage').value;
+  const todKey = document.getElementById('f-tod').value;
+  const iexPrice = parseFloat(document.getElementById('f-iex').value) || 3;
 
-  // Overview
-  document.getElementById('ov-discom').innerHTML = `₹${discomLanded.toFixed(2)}<span class="unit">₹/kWh</span>`;
-  document.getElementById('ov-exchange').innerHTML = `₹${ex.landed.toFixed(2)}<span class="unit">₹/kWh</span>`;
-  const savClass = saving >= 0 ? 'positive' : 'negative';
-  document.getElementById('ov-per-unit').innerHTML = `<span class="${savClass}">₹${saving.toFixed(4)}</span><span class="unit">₹/kWh</span>`;
-  document.getElementById('ov-volume').innerHTML = `${ex.bidVol.toFixed(0)}<span class="unit">MWH</span>`;
-  const totalSaving = saving * monthlyVol;
-  document.getElementById('ov-savings').textContent = `₹${Math.abs(totalSaving).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}`;
-  document.getElementById('ov-savings').className = 'amount ' + (totalSaving >= 0 ? 'positive' : 'negative');
-  document.getElementById('ov-savings-sub').textContent = totalSaving >= 0
-    ? `You save ₹${saving.toFixed(4)}/kWh via exchange | ${(saving/discomLanded*100).toFixed(2)}% cheaper`
-    : `Exchange is ₹${Math.abs(saving).toFixed(4)}/kWh costlier | DISCOM is cheaper for this scenario`;
+  const istsCharge = parseFloat(document.getElementById('a-ists').value) || 0;
+  const istsLoss = parseFloat(document.getElementById('a-ists-loss').value) || 0;
+  const stuCharge = parseFloat(document.getElementById('a-stu').value) || 0;
+  const stuLoss = parseFloat(document.getElementById('a-stu-loss').value) || 0;
+  const wheelCharge = parseFloat(document.getElementById('a-wheel').value) || 0;
+  const wheelLoss = parseFloat(document.getElementById('a-wheel-loss').value) || 0;
+  const css = parseFloat(document.getElementById('a-css').value) || 0;
+  const addSur = parseFloat(document.getElementById('a-addsur').value) || 0;
 
-  // DISCOM table
-  const dt = DISCOM[season][lf];
-  const dRows = [
-    ['Base Tariff', dt.base], ['Time of Day (ToD)', dt.tod], ['Electricity Duty', dt.ed],
-    ['Continuous Power Supply Surcharge', dt.cpss], ['FPPCA Charge', dt.fppca]
-  ];
-  let dtHtml = '';
-  dRows.forEach(r => { dtHtml += `<tr><td>${r[0]}</td><td class="num">₹${r[1].toFixed(4)}</td></tr>`; });
-  dtHtml += `<tr style="font-weight:700;background:rgba(59,130,246,0.06)"><td>LANDED DISCOM</td><td class="num">₹${discomLanded.toFixed(4)}</td></tr>`;
-  document.getElementById('discom-table').innerHTML = dtHtml;
+  // DISCOM tariff
+  let tariffData;
+  if (cat === 'commercial' && st.tariff.commercial && st.tariff.commercial[v]) {
+    tariffData = st.tariff.commercial[v];
+  } else if (st.tariff.industrial[v]) {
+    tariffData = st.tariff.industrial[v];
+    if (typeof tariffData === 'object' && tariffData.upto50) tariffData = tariffData.upto50;
+  } else {
+    tariffData = { base: 6, normal: 6, summerNormal: 6 };
+  }
 
-  // Exchange table
-  const eRows = [
-    ['Energy Cost @ MCP', `₹${(ex.adjPrice/1000).toFixed(4)}/kWh`, ex.energyCost, ex.perUnit.energy],
-    ['ISTS/CTU Transmission', `₹${OA_CHARGES.ists_charge}/MWH`, ex.istsCharge, ex.perUnit.ists],
-    ['STU Transmission', `₹${OA_CHARGES.stu_charge}/MWH`, ex.stuCharge, ex.perUnit.stu],
-    ['Wheeling Charge', `₹${OA_CHARGES.wheeling_charge}/MWH`, ex.wheelCharge, ex.perUnit.wheeling],
-    ['NLDC (App + Scheduling)', '—', ex.nldcApp + ex.nldcSch, ex.perUnit.nldc],
-    ['SLDC Scheduling', `₹${OA_CHARGES.sldc_charge}/day`, ex.sldcCharge, ex.perUnit.sldc],
-    ['Exchange Transaction Fee', `₹${document.getElementById('ex-txfee').value}/MWH`, ex.txFeeTotal, ex.perUnit.txFee],
-    ['Trading Margin', `₹${OA_CHARGES.trading_margin}/MWH`, ex.tradingMargin, ex.perUnit.trading],
-  ];
-  let etHtml = '';
-  eRows.forEach(r => { etHtml += `<tr><td>${r[0]}</td><td class="num">${r[1]}</td><td class="num">₹${r[2].toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</td><td class="num">₹${r[3].toFixed(6)}</td></tr>`; });
-  etHtml += `<tr style="font-weight:600;border-top:2px solid var(--border)"><td>Sub-total (Energy+Charges)</td><td></td><td class="num">₹${ex.totalPayable.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</td><td class="num">₹${ex.costPerUnit.toFixed(4)}</td></tr>`;
-  etHtml += `<tr><td>Cross Subsidy Surcharge</td><td></td><td></td><td class="num">₹${ex.css.toFixed(4)}</td></tr>`;
-  etHtml += `<tr><td>Electricity Duty</td><td></td><td></td><td class="num">₹${ex.elecDuty.toFixed(4)}</td></tr>`;
-  etHtml += `<tr><td>Green Cess</td><td></td><td></td><td class="num">₹${ex.greenCess.toFixed(4)}</td></tr>`;
-  etHtml += `<tr style="font-weight:700;background:rgba(16,185,129,0.08)"><td>FINAL LANDED COST</td><td></td><td></td><td class="num">₹${ex.landed.toFixed(4)}</td></tr>`;
-  document.getElementById('exchange-table').innerHTML = etHtml;
+  const energyRate = tariffData[todKey] || tariffData.base || 0;
+  const todCharge = 0;
+  const fuelSurcharge = st.fuel || 0;
+  const discomTotal = energyRate + fuelSurcharge;
 
-  // Comparison table
-  let ctHtml = '';
-  Object.keys(DISCOM).forEach(s => {
-    const dL = getDiscomLanded(s, lf);
-    const sv = dL - ex.landed;
-    const mSv = sv * monthlyVol;
-    ctHtml += `<tr>
-      <td>${DISCOM[s].label}</td>
-      <td class="num">₹${dL.toFixed(4)}</td>
-      <td class="num">₹${ex.landed.toFixed(4)}</td>
-      <td class="num ${sv >= 0 ? 'positive' : 'negative'}">₹${sv.toFixed(4)}</td>
-      <td class="num ${mSv >= 0 ? 'positive' : 'negative'}">₹${mSv.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</td>
-    </tr>`;
+  document.getElementById('r-d-energy').textContent = energyRate.toFixed(2);
+  document.getElementById('r-d-tod').textContent = todCharge.toFixed(2);
+  document.getElementById('r-d-fuel').textContent = fuelSurcharge.toFixed(2);
+  document.getElementById('r-d-total').textContent = discomTotal.toFixed(2);
+
+  // OA charges
+  const totalLossFactor = (1 - istsLoss/100) * (1 - stuLoss/100) * (1 - wheelLoss/100);
+  const effectiveIEX = iexPrice / totalLossFactor;
+  const otherCharges = 0;
+
+  const oaComponents = {
+    'ISTS Charges': istsCharge,
+    'STU Charges': stuCharge,
+    'Wheeling Charges': wheelCharge,
+    'Cross Subsidy Surcharge': css,
+    'Additional Surcharge': addSur,
+    'Other Charges*': otherCharges
+  };
+
+  let oaHtml = '';
+  const pieData = [];
+  const pieLabels = [];
+  const pieColors = ['#2563eb','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899'];
+  let totalOACharges = 0;
+
+  Object.entries(oaComponents).forEach(([label, val]) => {
+    oaHtml += `<div class="label">${label}</div><div class="val">${val.toFixed(2)}</div>`;
+    totalOACharges += val;
+    if (val > 0) { pieLabels.push(label); pieData.push(val); }
   });
-  document.getElementById('compare-table').innerHTML = ctHtml;
+  document.getElementById('oa-charges').innerHTML = oaHtml;
 
-  updateCharts(discomLanded, ex);
-}
+  // Losses display
+  document.getElementById('r-ists-loss').textContent = istsLoss + '%';
+  document.getElementById('r-stu-loss').textContent = stuLoss + '%';
+  document.getElementById('r-wh-loss').textContent = wheelLoss + '%';
 
-function updateCharts(discomLanded, ex) {
-  const lf = document.getElementById('d-lf').value;
+  // Landed cost = IEX adjusted for losses + all OA charges
+  const landedCost = effectiveIEX + totalOACharges;
 
-  // Overview bar chart
-  if (charts.overview) charts.overview.destroy();
-  charts.overview = new Chart(document.getElementById('chartOverview'), {
-    type: 'bar',
-    data: {
-      labels: ['DISCOM', 'Exchange'],
-      datasets: [{
-        label: '₹/kWh',
-        data: [discomLanded, ex.landed],
-        backgroundColor: ['#ef4444aa', '#3b82f6aa'],
-        borderColor: ['#ef4444', '#3b82f6'],
-        borderWidth: 2, borderRadius: 6
-      }]
-    },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true, grid: { color: '#2a3a4d' }, ticks: { color: '#8899aa' } }, x: { grid: { display: false }, ticks: { color: '#8899aa' } } } }
-  });
+  // Savings = DISCOM total - Landed OA cost
+  const saving = discomTotal - landedCost;
+
+  document.getElementById('r-landed').textContent = landedCost.toFixed(2);
+  document.getElementById('r-saving').textContent = saving.toFixed(2);
+  const savBox = document.getElementById('r-saving-box');
+  savBox.classList.toggle('sb-negative', saving < 0);
 
   // Pie chart
-  if (charts.pie) charts.pie.destroy();
-  charts.pie = new Chart(document.getElementById('chartPie'), {
+  if (pieChart) pieChart.destroy();
+  if (pieData.length === 0) { pieData.push(1); pieLabels.push('No charges'); }
+  pieChart = new Chart(document.getElementById('chartPie'), {
     type: 'doughnut',
     data: {
-      labels: ['Energy', 'ISTS', 'STU', 'Wheeling', 'NLDC/SLDC', 'Tx Fee', 'CSS+ED+Cess'],
-      datasets: [{ data: [
-        ex.perUnit.energy, ex.perUnit.ists, ex.perUnit.stu, ex.perUnit.wheeling,
-        ex.perUnit.nldc + ex.perUnit.sldc, ex.perUnit.txFee + ex.perUnit.trading,
-        ex.css + ex.elecDuty + ex.greenCess
-      ], backgroundColor: ['#3b82f6','#ef4444','#f59e0b','#10b981','#8b5cf6','#ec4899','#6366f1'] }]
+      labels: pieLabels,
+      datasets: [{ data: pieData, backgroundColor: pieColors.slice(0, pieData.length), borderWidth: 0 }]
     },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#8899aa', boxWidth: 12, font: { size: 11 } } } } }
-  });
-
-  // Discom seasonal chart
-  if (charts.discom) charts.discom.destroy();
-  const seasons = Object.keys(DISCOM);
-  charts.discom = new Chart(document.getElementById('chartDiscom'), {
-    type: 'bar',
-    data: {
-      labels: seasons.map(s => DISCOM[s].label.replace('Winter — ','W:').replace('Summer — ','S:')),
-      datasets: [
-        { label: 'Base', data: seasons.map(s => DISCOM[s][lf].base), backgroundColor: '#3b82f6' },
-        { label: 'ToD', data: seasons.map(s => DISCOM[s][lf].tod), backgroundColor: '#f59e0b' },
-        { label: 'ED', data: seasons.map(s => DISCOM[s][lf].ed), backgroundColor: '#10b981' },
-        { label: 'CPSS', data: seasons.map(s => DISCOM[s][lf].cpss), backgroundColor: '#8b5cf6' },
-        { label: 'FPPCA', data: seasons.map(s => DISCOM[s][lf].fppca), backgroundColor: '#ec4899' },
-      ]
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      cutout: '55%',
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `${ctx.label}: ₹${ctx.parsed.toFixed(2)}` } }
+      }
     },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#8899aa', boxWidth: 12 } } },
-      scales: { x: { stacked: true, grid: { display: false }, ticks: { color: '#8899aa', font: { size: 10 } } }, y: { stacked: true, grid: { color: '#2a3a4d' }, ticks: { color: '#8899aa' } } } }
-  });
-
-  // Comparison charts
-  if (charts.compare) charts.compare.destroy();
-  charts.compare = new Chart(document.getElementById('chartCompare'), {
-    type: 'bar',
-    data: {
-      labels: seasons.map(s => DISCOM[s].label.replace('Winter — ','W:').replace('Summer — ','S:')),
-      datasets: [
-        { label: 'DISCOM', data: seasons.map(s => getDiscomLanded(s, lf)), backgroundColor: '#ef4444aa', borderColor: '#ef4444', borderWidth: 1 },
-        { label: 'Exchange', data: seasons.map(() => ex.landed), backgroundColor: '#3b82f6aa', borderColor: '#3b82f6', borderWidth: 1 }
-      ]
-    },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#8899aa' } } },
-      scales: { x: { grid: { display: false }, ticks: { color: '#8899aa', font: { size: 10 } } }, y: { grid: { color: '#2a3a4d' }, ticks: { color: '#8899aa' } } } }
-  });
-
-  if (charts.bill) charts.bill.destroy();
-  const vol = ex.drawlFinal * 1000;
-  charts.bill = new Chart(document.getElementById('chartBill'), {
-    type: 'bar',
-    data: {
-      labels: seasons.map(s => DISCOM[s].label.replace('Winter — ','W:').replace('Summer — ','S:')),
-      datasets: [
-        { label: 'DISCOM Bill', data: seasons.map(s => getDiscomLanded(s, lf) * vol), backgroundColor: '#ef4444aa' },
-        { label: 'Exchange Bill', data: seasons.map(() => ex.landed * vol), backgroundColor: '#3b82f6aa' }
-      ]
-    },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#8899aa' } } },
-      scales: { x: { grid: { display: false }, ticks: { color: '#8899aa', font: { size: 10 } } }, y: { grid: { color: '#2a3a4d' }, ticks: { color: '#8899aa', callback: v => '₹' + (v/1000).toFixed(0) + 'K' } } } }
+    plugins: [{
+      id: 'doughnutLabels',
+      afterDraw(chart) {
+        const { ctx } = chart;
+        chart.data.datasets[0].data.forEach((val, i) => {
+          const meta = chart.getDatasetMeta(0);
+          const arc = meta.data[i];
+          if (!arc) return;
+          const { x, y } = arc.tooltipPosition();
+          ctx.save();
+          ctx.fillStyle = '#1e293b';
+          ctx.font = 'bold 11px Segoe UI';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          if (val > 0.01) ctx.fillText(val.toFixed(2), x, y);
+          ctx.restore();
+        });
+      }
+    }]
   });
 }
 
-recalc();
+function clearForm() {
+  document.getElementById('f-iex').value = 3;
+  document.getElementById('a-ists').value = 0.45;
+  document.getElementById('a-ists-loss').value = 3.9;
+  onStateChange();
+}
+
+// Init
+onStateChange();
 </script>
 </body>
 </html>
